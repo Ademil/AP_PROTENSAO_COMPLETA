@@ -1,0 +1,2257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>APavan — Vigas Protendidas</title>
+<meta name="description" content="Análise, Dimensionamento e Verificação de Vigas Protendidas — ABNT NBR 6118:2023">
+<meta name="theme-color" content="#0d2a44">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="APavan Protendidas">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --tinta:#0d2a44;        /* azul nanquim - chrome */
+  --tinta-2:#164b77;      /* azul de cota */
+  --aco:#5b7c99;          /* azul acinzentado */
+  --papel:#eef1f4;        /* fundo cinza-claro */
+  --carta:#ffffff;
+  --risco:#c9d3dc;        /* linhas / bordas */
+  --texto:#16232e;
+  --texto-2:#5a6b78;
+  --ok:#137a4d;
+  --alerta:#b26a00;
+  --erro:#b3261e;
+  --protensao:#7a2f8f;    /* cor dedicada aos diagramas de protensão */
+  --r:6px;
+  --mono:"SFMono-Regular",ui-monospace,"Roboto Mono","Consolas",monospace;
+  --sans:"Inter","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--sans);color:var(--texto);background:var(--papel);
+  font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%;
+  font-variant-numeric:tabular-nums;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+h1,h2,h3,h4{margin:0;font-weight:600;line-height:1.25}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--tinta-2)}
+
+/* ---------- Cabeçalho ---------- */
+header.topo{
+  background:var(--tinta);color:#fff;display:flex;align-items:center;gap:16px;
+  padding:10px 16px;position:sticky;top:0;z-index:40;
+  padding-top:calc(10px + env(safe-area-inset-top));
+}
+.logo{
+  border:1.5px solid rgba(255,255,255,.55);border-radius:4px;padding:6px 10px;
+  line-height:1.05;flex:none
+}
+.logo b{display:block;font-size:19px;letter-spacing:.5px}
+.logo span{display:block;font-size:9.5px;color:#a9c4dc;letter-spacing:.35px}
+.topo .tit{flex:1;min-width:0}
+.topo .tit h1{font-size:17px;letter-spacing:.2px}
+.topo .tit p{margin:1px 0 0;font-size:12px;color:#9fbcd6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topo .acoes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.bt{
+  background:#fff;border:1px solid var(--risco);border-radius:var(--r);
+  padding:7px 12px;cursor:pointer;font-size:13px;font-weight:500;color:var(--texto);
+}
+.bt:hover{background:#f2f6f9}
+.bt:active{transform:translateY(1px)}
+.bt.fantasma{background:transparent;border-color:rgba(255,255,255,.4);color:#fff}
+.bt.fantasma:hover{background:rgba(255,255,255,.12)}
+.bt.calc{
+  background:linear-gradient(180deg,#1b6fae,#13537f);color:#fff;border:none;
+  font-weight:600;padding:12px 22px;font-size:15px;letter-spacing:.2px;
+  box-shadow:0 1px 0 rgba(0,0,0,.2)
+}
+.bt.calc:hover{filter:brightness(1.07)}
+.bt.mini{padding:4px 9px;font-size:12px}
+.bt:focus-visible,input:focus-visible,select:focus-visible,.aba:focus-visible{outline:2px solid #2f8fd4;outline-offset:2px}
+
+/* ---------- Abas ---------- */
+nav.abas{
+  background:#123a5e;display:flex;gap:2px;overflow-x:auto;position:sticky;top:0;z-index:35;
+  scrollbar-width:thin;-webkit-overflow-scrolling:touch;
+}
+.aba{
+  background:transparent;border:0;border-bottom:3px solid transparent;color:#bdd4e8;
+  padding:10px 14px;white-space:nowrap;cursor:pointer;font-size:13.5px
+}
+.aba[aria-selected="true"]{color:#fff;border-bottom-color:#4aa3e0;background:rgba(255,255,255,.07)}
+.aba .n{font-family:var(--mono);font-size:11px;color:#6f9cc4;margin-right:6px}
+
+/* ---------- Layout ---------- */
+main{max-width:1280px;margin:0 auto;padding:16px 14px 90px}
+.painel{display:none}
+.painel.on{display:block}
+.grade{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));align-items:start}
+.grade.larga{grid-template-columns:1fr}
+
+.cartao{background:var(--carta);border:1px solid var(--risco);border-radius:var(--r);overflow:hidden}
+.cartao>h3{
+  font-size:13px;letter-spacing:.4px;padding:9px 13px;background:#f4f7fa;
+  border-bottom:1px solid var(--risco);color:var(--tinta);display:flex;
+  justify-content:space-between;align-items:center;gap:8px
+}
+.cartao>h3 small{font-weight:400;color:var(--texto-2);letter-spacing:0;font-size:11.5px}
+.corpo{padding:13px}
+
+/* ---------- Campos ---------- */
+.campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.campo{display:flex;flex-direction:column;gap:3px;min-width:0}
+.campo label{font-size:12px;color:var(--texto-2)}
+.campo label em{font-style:normal;color:var(--aco);font-family:var(--mono);font-size:11px}
+.campo input,.campo select{
+  border:1px solid var(--risco);border-radius:4px;padding:9px 9px;background:#fff;
+  min-height:40px;width:100%
+}
+.campo input[readonly]{background:#f4f7fa;color:var(--texto-2)}
+.campo.wide{grid-column:1/-1}
+.checa{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 0}
+.checa input{width:18px;height:18px}
+
+/* ---------- Tabelas ---------- */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:6px 8px;border-bottom:1px solid #e6ebf0;text-align:right}
+th:first-child,td:first-child{text-align:left}
+thead th{background:#f4f7fa;color:var(--tinta);font-weight:600;font-size:11.5px;letter-spacing:.3px;border-bottom:1px solid var(--risco)}
+tbody tr:hover{background:#f8fbfd}
+td.num,th.num{font-family:var(--mono);font-size:12.5px}
+.rolagem{overflow-x:auto}
+
+/* ---------- Estado / semáforo ---------- */
+.sit{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px;white-space:nowrap}
+.sit::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+.sit.ok{color:var(--ok)}.sit.at{color:var(--alerta)}.sit.no{color:var(--erro)}.sit.nd{color:var(--texto-2)}
+.tag{font-size:11px;padding:2px 7px;border-radius:20px;background:#eaf2f8;color:var(--tinta-2);white-space:nowrap}
+.tag.aviso{background:#fdf2e2;color:var(--alerta)}
+.aviso-box{
+  border-left:3px solid var(--alerta);background:#fdf8ef;padding:9px 12px;
+  font-size:12.5px;color:#6b4e18;border-radius:0 4px 4px 0;margin:10px 0
+}
+.erro-box{border-left-color:var(--erro);background:#fdf1f0;color:#7d2620}
+.info-box{border-left-color:var(--tinta-2);background:#f1f6fa;color:#27506f}
+
+/* ---------- Barras de utilização ---------- */
+.uso{display:grid;grid-template-columns:120px 1fr 74px;gap:10px;align-items:center;margin:9px 0;font-size:13px}
+.barra{height:16px;background:#e9eef3;border-radius:3px;overflow:hidden;position:relative}
+.barra i{display:block;height:100%;background:var(--ok);transition:width .25s ease}
+.barra i.at{background:var(--alerta)}.barra i.no{background:var(--erro)}
+.barra::after{content:"";position:absolute;left:100%;top:0;bottom:0;width:1px;background:#94a6b5}
+.uso .v{text-align:right;font-family:var(--mono);font-size:12.5px}
+
+/* ---------- Gráficos ---------- */
+.graf{position:relative;background:#fff}
+.graf svg{display:block;width:100%;height:auto;touch-action:pan-y}
+.graf .dica{
+  position:absolute;pointer-events:none;background:rgba(13,42,68,.95);color:#fff;
+  font-size:11.5px;font-family:var(--mono);padding:6px 8px;border-radius:4px;white-space:pre;
+  transform:translate(-50%,-115%);opacity:0;transition:opacity .1s;z-index:5;line-height:1.5
+}
+.graf-cab{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid #eef2f5}
+.graf-cab h4{font-size:12.5px;color:var(--tinta)}
+.legenda{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--texto-2);padding:6px 12px}
+.legenda span{display:inline-flex;align-items:center;gap:5px}
+.legenda i{width:14px;height:3px;border-radius:2px;display:inline-block}
+
+/* ---------- Memória de cálculo ---------- */
+details.memoria{border:1px solid var(--risco);border-radius:4px;margin:8px 0;background:#fcfdfe}
+details.memoria>summary{
+  cursor:pointer;padding:7px 11px;font-size:12.5px;color:var(--tinta-2);font-weight:500;
+  list-style:none;display:flex;justify-content:space-between;gap:8px
+}
+details.memoria>summary::after{content:"ver cálculo";font-size:11px;color:var(--aco);font-weight:400}
+details.memoria[open]>summary::after{content:"ocultar"}
+details.memoria>summary::-webkit-details-marker{display:none}
+.mem{padding:4px 12px 12px;font-family:var(--mono);font-size:12.5px;line-height:1.75;color:#24333f;white-space:pre-wrap;overflow-x:auto}
+.mem b{color:var(--tinta);font-weight:600}
+.mem hr{border:0;border-top:1px dashed var(--risco);margin:7px 0}
+
+/* ---------- Barra inferior ---------- */
+.rodape-fixo{
+  position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);
+  border-top:1px solid var(--risco);padding:8px 14px;display:flex;gap:12px;align-items:center;
+  z-index:30;backdrop-filter:blur(6px);padding-bottom:calc(8px + env(safe-area-inset-bottom))
+}
+.rodape-fixo .resumo{flex:1;display:flex;gap:14px;overflow-x:auto;font-size:12px;color:var(--texto-2)}
+.rodape-fixo .resumo b{color:var(--texto);font-family:var(--mono)}
+
+/* ---------- Diversos ---------- */
+.linha-bt{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.nota{font-size:11.5px;color:var(--texto-2);margin-top:8px}
+.divisor{height:1px;background:var(--risco);margin:14px 0}
+.kv{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:13px}
+.kv div:nth-child(even){font-family:var(--mono);font-size:12.5px}
+.slider{display:grid;grid-template-columns:118px 1fr 70px;gap:10px;align-items:center;margin:11px 0;font-size:12.5px}
+.slider input[type=range]{width:100%;accent-color:var(--tinta-2)}
+.slider output{font-family:var(--mono);text-align:right;font-size:12.5px}
+.selo{
+  display:inline-block;border:1px dashed var(--alerta);color:var(--alerta);border-radius:4px;
+  padding:3px 8px;font-size:11px;margin-bottom:8px
+}
+@media (max-width:640px){
+  .topo .tit p{display:none}
+  .topo{gap:10px;padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top))}
+  .logo b{font-size:16px}
+  main{padding:12px 10px 96px}
+  .uso{grid-template-columns:96px 1fr 62px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  header.topo,nav.abas,.rodape-fixo,.linha-bt,.bt{display:none!important}
+  body{background:#fff}
+  .painel{display:block!important}
+}
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="logo"><b>APavan</b><span>ENGENHARIA E CONSULTORIA</span></div>
+  <div class="tit">
+    <h1>Vigas Protendidas</h1>
+    <p>Análise, dimensionamento e verificação — ABNT NBR 6118:2023</p>
+  </div>
+  <div class="acoes">
+    <button class="bt fantasma mini" id="btNovo">Novo</button>
+    <button class="bt fantasma mini" id="btSalvar">Salvar</button>
+    <button class="bt fantasma mini" id="btAbrir">Abrir</button>
+    <button class="bt fantasma mini" id="btExemplo">Exemplo</button>
+    <button class="bt fantasma mini" id="btInstalar" hidden>Instalar</button>
+  </div>
+</header>
+
+<nav class="abas" id="navAbas" role="tablist">
+  <button class="aba" role="tab" data-p="entrada"><span class="n">1</span>Entrada</button>
+  <button class="aba" role="tab" data-p="geometria"><span class="n">2</span>Geometria</button>
+  <button class="aba" role="tab" data-p="materiais"><span class="n">3</span>Materiais</button>
+  <button class="aba" role="tab" data-p="protensao"><span class="n">4</span>Protensão</button>
+  <button class="aba" role="tab" data-p="cargas"><span class="n">5</span>Carregamentos</button>
+  <button class="aba" role="tab" data-p="analise"><span class="n">6</span>Análise</button>
+  <button class="aba" role="tab" data-p="perdas"><span class="n">7</span>Perdas</button>
+  <button class="aba" role="tab" data-p="elu"><span class="n">8</span>ELU</button>
+  <button class="aba" role="tab" data-p="els"><span class="n">9</span>ELS</button>
+  <button class="aba" role="tab" data-p="armaduras"><span class="n">10</span>Armaduras</button>
+  <button class="aba" role="tab" data-p="graficos"><span class="n">11</span>Gráficos</button>
+  <button class="aba" role="tab" data-p="resultados"><span class="n">12</span>Resultados</button>
+  <button class="aba" role="tab" data-p="relatorio"><span class="n">13</span>Relatório</button>
+</nav>
+
+<main>
+<!-- ================= 1. ENTRADA ================= -->
+<section class="painel on" id="p-entrada">
+  <div class="grade">
+    <div class="cartao">
+      <h3>Identificação do projeto</h3>
+      <div class="corpo">
+        <div class="campos">
+          <div class="campo wide"><label for="obra">Obra</label><input id="obra" value="Obra exemplo"></div>
+          <div class="campo"><label for="elemento">Elemento</label><input id="elemento" value="V-01"></div>
+          <div class="campo"><label for="local">Local</label><input id="local" value="Tubarão — SC"></div>
+          <div class="campo"><label for="resp">Responsável técnico</label><input id="resp" value="Eng. Ademilton Pavan"></div>
+          <div class="campo"><label for="crea">CREA</label><input id="crea" value="CREA-SC 86959-8"></div>
+          <div class="campo"><label for="data">Data</label><input id="data" type="date"></div>
+        </div>
+      </div>
+    </div>
+    <div class="cartao">
+      <h3>Modelo estrutural</h3>
+      <div class="corpo">
+        <div class="campos">
+          <div class="campo"><label for="apoio">Vinculação</label>
+            <select id="apoio">
+              <option value="biapoiada">Biapoiada</option>
+              <option value="continua" disabled>Contínua (não implementado)</option>
+              <option value="engastada" disabled>Engastada (não implementado)</option>
+              <option value="balanco" disabled>Balanço (não implementado)</option>
+            </select></div>
+          <div class="campo"><label for="npts">Discretização <em>pontos</em></label>
+            <select id="npts"><option>101</option><option selected>201</option><option>501</option><option>1001</option></select></div>
+        </div>
+        <div id="croquiApoios" class="graf" style="margin-top:10px"></div>
+        <div class="aviso-box info-box">Nesta versão está implementada integralmente a <b>viga biapoiada</b>. O motor de cálculo já está separado da interface para receber vigas contínuas em versões futuras.</div>
+      </div>
+    </div>
+    <div class="cartao">
+      <h3>Unidades</h3>
+      <div class="corpo">
+        <div class="campos">
+          <div class="campo"><label for="uComp">Comprimento (vão)</label><select id="uComp"><option value="m" selected>m</option><option value="cm">cm</option></select></div>
+          <div class="campo"><label for="uSec">Dimensões da seção</label><select id="uSec"><option value="cm" selected>cm</option><option value="mm">mm</option></select></div>
+        </div>
+        <div class="nota">Forças em kN · momentos em kN·m · tensões em MPa · áreas em cm² · massa específica em kN/m³. A troca de unidade converte automaticamente os valores já digitados.</div>
+      </div>
+    </div>
+    <div class="cartao">
+      <h3>Responsabilidade técnica</h3>
+      <div class="corpo">
+        <div class="aviso-box">Esta ferramenta é destinada ao apoio ao cálculo e à análise estrutural. Os resultados devem ser verificados por profissional legalmente habilitado e não substituem a análise, o julgamento de engenharia, o projeto executivo ou a responsabilidade técnica.</div>
+        <div class="nota">O aplicativo não inventa prescrições normativas. Toda hipótese, simplificação ou modelo não explicitamente normatizado aparece identificado como <b>verificação simplificada</b> ou <b>não implementado</b>.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 2. GEOMETRIA ================= -->
+<section class="painel" id="p-geometria">
+  <div class="grade">
+    <div class="cartao">
+      <h3>Seção transversal</h3>
+      <div class="corpo">
+        <div class="campos">
+          <div class="campo"><label for="tipoSec">Tipo de seção</label>
+            <select id="tipoSec"><option value="ret">Retangular</option><option value="T" selected>T</option><option value="I">I</option><option value="pers">Personalizada (retângulos)</option></select></div>
+          <div class="campo"><label for="L">Vão teórico L <em id="uL">m</em></label><input id="L" type="number" step="0.01" value="12"></div>
+          <div class="campo"><label for="h">Altura h <em class="us">cm</em></label><input id="h" type="number" step="0.5" value="80"></div>
+          <div class="campo"><label for="bw">Largura da alma b<sub>w</sub> <em class="us">cm</em></label><input id="bw" type="number" step="0.5" value="30"></div>
+          <div class="campo gT gI"><label for="bf">Largura da mesa superior b<sub>f</sub> <em class="us">cm</em></label><input id="bf" type="number" step="0.5" value="80"></div>
+          <div class="campo gT gI"><label for="hf">Altura da mesa superior h<sub>f</sub> <em class="us">cm</em></label><input id="hf" type="number" step="0.5" value="15"></div>
+          <div class="campo gI"><label for="bfi">Largura da mesa inferior <em class="us">cm</em></label><input id="bfi" type="number" step="0.5" value="50"></div>
+          <div class="campo gI"><label for="hfi">Altura da mesa inferior <em class="us">cm</em></label><input id="hfi" type="number" step="0.5" value="15"></div>
+          <div class="campo"><label for="cob">Cobrimento nominal c <em class="us">cm</em></label><input id="cob" type="number" step="0.5" value="4"></div>
+          <div class="campo"><label for="dLinha">d' (armadura superior) <em class="us">cm</em></label><input id="dLinha" type="number" step="0.5" value="5"></div>
+        </div>
+        <div class="campo wide" id="boxPers" hidden style="margin-top:10px">
+          <label>Retângulos da seção personalizada (medidas em cm, y medido do topo)</label>
+          <div class="rolagem"><table id="tabPers"><thead><tr><th>#</th><th class="num">b</th><th class="num">altura</th><th class="num">y topo</th><th></th></tr></thead><tbody></tbody></table></div>
+          <div class="linha-bt"><button class="bt mini" id="addPers">Adicionar retângulo</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="cartao">
+      <h3>Propriedades geométricas <small>seção bruta</small></h3>
+      <div class="corpo">
+        <div class="rolagem"><table id="tabSec"></table></div>
+        <details class="memoria"><summary>Cálculo das propriedades da seção</summary><div class="mem" id="memSec"></div></details>
+      </div>
+    </div>
+    <div class="cartao">
+      <h3>Desenho da seção <small>atualiza com os dados</small></h3>
+      <div class="corpo"><div class="graf" id="desSecao"></div>
+        <div class="legenda"><span><i style="background:#164b77"></i>contorno</span><span><i style="background:#b3261e"></i>armadura passiva</span><span><i style="background:#7a2f8f"></i>cordoalhas</span><span><i style="background:#137a4d"></i>CG / LN</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 3. MATERIAIS ================= -->
+<section class="painel" id="p-materiais">
+  <div class="grade">
+    <div class="cartao">
+      <h3>Concreto</h3>
+      <div class="corpo">
+        <div class="campos">
+          <div class="campo"><label for="fck">f<sub>ck</sub> <em>MPa</em></label><input id="fck" type="number" step="1" value="40"></div>
+          <div class="campo"><label for="agreg">Agregado graúdo (α<sub>E</sub>)</label>
+            <select id="agreg"><option value="1.2">Basalto / diabásio — 1,2</option><option value="1.0" selected>Granito / gnaisse — 1,0</option><option value="0.9">Calcário — 0,9</option><option value="0.7">Arenito — 0,7</option></select></div>
+          <div class="campo"><label for="cimento">Cimento (coef. s)</label>
+            <select id="cimento"><option value="0.38">CP III / CP IV — s = 0,38</option><option value="0.25" selected>CP I / CP II — s = 0,25</option><option value="0.20">CP V-ARI — s = 0,20</option></select></div>
+          <div class="campo"><label for="t0">Idade na protensão t<sub>0</sub> <em>dias</em></label><input id="t0" type="number" step="1" value="7"></div>
+          <div class="campo"><label for="gamaC">γ<sub>c</sub></label><input id="gamaC" type="number" step="0.05" value="1.4"></div>
+          <div class="campo"><label for="pesoEsp">Massa específica <em>kN/m³</em></label><input id="pesoEsp" type="number" step="0.5" value="25"></div>
+          <div class="campo"><label for="poisson">Coef. de Poisson ν</label><input id="poisson" type="number" step="0.05" value="0.2"></div>
+          <div class="campo"><label for="caa">Classe de agressividade</label>
+            <select id="caa"><option value="1">CAA I — fraca</option><option value="2">CAA II — moderada</option><option value="3" selected>CAA III — forte</option><option value="4">CAA IV — muito forte</option></select></div>
+        </div>
+        <div class="rolagem" style="margin-top:10px"><table id="tabConc"></table></div>
+        <details class="memoria"><summary>Propriedades derivadas do concreto</summary><div class="mem" id="memConc"></div></details>
+      </div>
+    </div>
+    <div class="cartao">
+      <h3>Aço passivo</h3>
+      <div class="corpo">
+        <div class="campos">
+          <div class="campo"><label for="tipoAco">Categoria</label><select id="tipoAco"><option value="50" selected>CA-50</option><option value="60">CA-60</option></select></div>
+          <div class="campo"><label for="Es">E<sub>s</sub> <em>GPa</em></label><input id="Es" type="number" step="5" value="210"></div>
+          <div class="campo"><label for="gamaS">γ<sub>s</sub></label><input id="gamaS" type="number" step="0.05" value="1.15"></div>
+          <div class="campo"><label for="phiLong">Ø barras longitudinais <em>mm</em></label>
+            <select id="phiLong"><option>6.3</option><option>8</option><option>10</option><option>12.5</option><option selected>16</option><option>20</option><option>25</option><option>32</option></select></div>
+          <div class="campo"><label for="phiEst">Ø estribos <em>mm</em></label>
+            <select id="phiEst"><option>5</option><option>6.3</option><option selected>8</option><option>10</option><option>12.5</option></select></div>
+          <div class="campo"><label for="ramos">Ramos do estribo</label><select id="ramos"><option selected>2</option><option>4</option></select></div>
+        </div>
+      </div>
+    </div>
+    <div class="cartao">
+      <h3>Aço de protensão</h3>
+      <div class="corpo">
+        <div class="campos">
+          <div class="campo"><label for="tipoProt">Tipo</label><select id="tipoProt"><option value="cord" selected>Cordoalha</option><option value="fio">Fio</option><option value="barra">Barra</option></select></div>
+          <div class="campo"><label for="classeP">Designação</label>
+            <select id="classeP">
+              <option value="190RB" selected>CP-190 RB</option><option value="210RB">CP-210 RB</option>
+              <option value="190RN">CP-190 RN</option><option value="175RB">CP-175 RB</option><option value="man">Manual</option>
+            </select></div>
+          <div class="campo"><label for="fptk">f<sub>ptk</sub> <em>MPa</em></label><input id="fptk" type="number" step="5" value="1900"></div>
+          <div class="campo"><label for="fpyk">f<sub>pyk</sub> <em>MPa</em></label><input id="fpyk" type="number" step="5" value="1710"></div>
+          <div class="campo"><label for="Ep">E<sub>p</sub> <em>GPa</em></label><input id="Ep" type="number" step="5" value="200"></div>
+          <div class="campo"><label for="phiCord">Ø nominal <em>mm</em></label>
+            <select id="phiCord"><option value="9.5">9,5 (3/8")</option><option value="12.7" selected>12,7 (1/2")</option><option value="15.2">15,2 (0,6")</option><option value="man">Manual</option></select></div>
+          <div class="campo"><label for="Ap1">Área por cordoalha <em>cm²</em></label><input id="Ap1" type="number" step="0.001" value="0.987"></div>
+          <div class="campo"><label for="nCord">Número de cordoalhas</label><input id="nCord" type="number" step="1" min="1" value="12"></div>
+        </div>
+        <div class="rolagem" style="margin-top:10px"><table id="tabAcoP"></table></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 4. PROTENSÃO ================= -->
+<section class="painel" id="p-protensao">
+  <div class="grade">
+    <div class="cartao">
+      <h3>Sistema de protensão</h3>
+      <div class="corpo">
+        <div class="campos">
+          <div class="campo wide"><label for="sistema">Sistema</label>
+            <select id="sistema">
+              <option value="pre">Pré-tração (aderência inicial)</option>
+              <option value="posA" selected>Pós-tração aderente</option>
+              <option value="posN">Pós-tração não aderente</option>
+            </select></div>
+          <div class="campo"><label for="sigmaPi">Tensão inicial σ<sub>pi</sub> <em>MPa</em></label><input id="sigmaPi" type="number" step="5" value="1350"></div>
+          <div class="campo"><label for="nCabos">Nº de cabos (grupos)</label><input id="nCabos" type="number" step="1" min="1" value="3"></div>
+          <div class="campo"><label for="mu">Coef. de atrito μ <em>1/rad</em></label><input id="mu" type="number" step="0.01" value="0.2"></div>
+          <div class="campo"><label for="kOnd">Ondulação k <em>1/m</em></label><input id="kOnd" type="number" step="0.0001" value="0.002"></div>
+          <div class="campo"><label for="slip">Acomodação da ancoragem δ <em>mm</em></label><input id="slip" type="number" step="0.5" value="6"></div>
+          <div class="campo"><label for="ladosProt">Protensão aplicada</label><select id="ladosProt"><option value="1" selected>Uma extremidade</option><option value="2">Ambas as extremidades</option></select></div>
+        </div>
+        <div class="rolagem" style="margin-top:10px"><table id="tabLimProt"></table></div>
+        <details class="memoria"><summary>Limites de tensão na armadura ativa</summary><div class="mem" id="memLimProt"></div></details>
+      </div>
+    </div>
+    <div class="cartao">
+      <h3>Perfil do cabo resultante</h3>
+      <div class="corpo">
+        <div class="campos">
+          <div class="campo"><label for="perfil">Traçado</label>
+            <select id="perfil"><option value="parab" selected>Parabólico</option><option value="reto">Reto</option><option value="polig">Poligonal</option></select></div>
+          <div class="campo pg"><label for="eApoio">Excentricidade no apoio e<sub>ap</sub> <em class="us">cm</em></label><input id="eApoio" type="number" step="0.5" value="10"></div>
+          <div class="campo pg"><label for="eMeio">Excentricidade no meio e<sub>m</sub> <em class="us">cm</em></label><input id="eMeio" type="number" step="0.5" value="28"></div>
+        </div>
+        <div id="boxPolig" hidden>
+          <div class="rolagem"><table id="tabPolig"><thead><tr><th>#</th><th class="num">x (m)</th><th class="num">e (cm)</th><th></th></tr></thead><tbody></tbody></table></div>
+          <div class="linha-bt"><button class="bt mini" id="addPolig">Adicionar ponto</button></div>
+        </div>
+        <div class="nota">Excentricidade <b>positiva</b> = cabo abaixo do centro de gravidade da seção. O aplicativo verifica automaticamente se o cabo permanece dentro da seção considerando o cobrimento.</div>
+        <div class="graf" id="grafCabo" style="margin-top:8px"></div>
+        <div class="linha-bt">
+          <button class="bt mini" id="btArrasta">Editar pontos arrastando</button>
+          <button class="bt mini" data-png="grafCabo">Exportar PNG</button>
+        </div>
+        <div id="avisosCabo"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 5. CARREGAMENTOS ================= -->
+<section class="painel" id="p-cargas">
+  <div class="grade">
+    <div class="cartao">
+      <h3>Cargas distribuídas uniformes</h3>
+      <div class="corpo">
+        <div class="checa"><input type="checkbox" id="ppAuto" checked><label for="ppAuto">Calcular peso próprio automaticamente (g<sub>pp</sub> = γ<sub>c</sub> × A)</label></div>
+        <div class="campos">
+          <div class="campo"><label for="gpp">g<sub>pp</sub> <em>kN/m</em></label><input id="gpp" type="number" step="0.1" value="0" readonly></div>
+          <div class="campo"><label for="g2">Permanente adicional g<sub>2</sub> <em>kN/m</em></label><input id="g2" type="number" step="0.1" value="8"></div>
+          <div class="campo"><label for="q1">Variável q <em>kN/m</em></label><input id="q1" type="number" step="0.1" value="12"></div>
+        </div>
+        <div class="divisor"></div>
+        <h4 style="font-size:13px;margin-bottom:6px">Coeficientes</h4>
+        <div class="campos">
+          <div class="campo"><label for="gG">γ<sub>g</sub></label><input id="gG" type="number" step="0.05" value="1.4"></div>
+          <div class="campo"><label for="gQ">γ<sub>q</sub></label><input id="gQ" type="number" step="0.05" value="1.4"></div>
+          <div class="campo"><label for="gGfav">γ<sub>g,fav</sub></label><input id="gGfav" type="number" step="0.05" value="1"></div>
+          <div class="campo"><label for="psi0">ψ<sub>0</sub></label><input id="psi0" type="number" step="0.1" value="0.7"></div>
+          <div class="campo"><label for="psi1">ψ<sub>1</sub></label><input id="psi1" type="number" step="0.1" value="0.6"></div>
+          <div class="campo"><label for="psi2">ψ<sub>2</sub></label><input id="psi2" type="number" step="0.1" value="0.4"></div>
+        </div>
+        <div class="nota">Valores de ψ conforme ABNT NBR 8681 / NBR 6118 Tabela 11.2 — ajuste conforme o uso da edificação.</div>
+      </div>
+    </div>
+    <div class="cartao">
+      <h3>Cargas concentradas</h3>
+      <div class="corpo">
+        <div class="rolagem"><table id="tabPL"><thead><tr><th>#</th><th class="num">x (m)</th><th class="num">P (kN)</th><th>Caso</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div class="linha-bt"><button class="bt mini" id="addPL">Adicionar carga</button></div>
+      </div>
+    </div>
+    <div class="cartao">
+      <h3>Momentos concentrados</h3>
+      <div class="corpo">
+        <div class="rolagem"><table id="tabMM"><thead><tr><th>#</th><th class="num">x (m)</th><th class="num">M (kN·m)</th><th>Caso</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div class="linha-bt"><button class="bt mini" id="addMM">Adicionar momento</button></div>
+      </div>
+    </div>
+    <div class="cartao">
+      <h3>Cargas distribuídas parciais</h3>
+      <div class="corpo">
+        <div class="rolagem"><table id="tabDL"><thead><tr><th>#</th><th class="num">x₁ (m)</th><th class="num">x₂ (m)</th><th class="num">q₁ (kN/m)</th><th class="num">q₂ (kN/m)</th><th>Caso</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div class="linha-bt"><button class="bt mini" id="addDL">Adicionar trecho</button></div>
+        <div class="nota">q₁ = q₂ → uniforme · q₁ = 0 → triangular · q₁ ≠ q₂ → trapezoidal.</div>
+      </div>
+    </div>
+    <div class="cartao">
+      <h3>Combinações de ações</h3>
+      <div class="corpo"><div class="rolagem"><table id="tabComb"></table></div>
+        <details class="memoria"><summary>Expressões e coeficientes utilizados</summary><div class="mem" id="memComb"></div></details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 6. ANÁLISE ================= -->
+<section class="painel" id="p-analise">
+  <div class="grade larga">
+    <div class="cartao">
+      <h3>Esforços — reações e valores extremos</h3>
+      <div class="corpo"><div class="rolagem"><table id="tabEsf"></table></div>
+        <details class="memoria"><summary>Equilíbrio e integração numérica</summary><div class="mem" id="memEsf"></div></details>
+      </div>
+    </div>
+  </div>
+  <div class="grade">
+    <div class="cartao"><h3>Momento fletor</h3><div class="corpo"><div class="graf" id="gMom"></div><div class="linha-bt"><button class="bt mini" data-png="gMom">PNG</button></div></div></div>
+    <div class="cartao"><h3>Esforço cortante</h3><div class="corpo"><div class="graf" id="gCort"></div><div class="linha-bt"><button class="bt mini" data-png="gCort">PNG</button></div></div></div>
+    <div class="cartao"><h3>Flecha</h3><div class="corpo"><div class="graf" id="gFlecha"></div><div class="linha-bt"><button class="bt mini" data-png="gFlecha">PNG</button></div></div></div>
+    <div class="cartao">
+      <h3>Modo seção <small>leitura em x</small></h3>
+      <div class="corpo">
+        <div class="slider"><label for="secX">Posição x</label><input type="range" id="secX" min="0" max="100" value="50" step="0.5"><output id="secXv">6,00 m</output></div>
+        <div class="rolagem"><table id="tabSecX"></table></div>
+      </div>
+    </div>
+    <div class="cartao">
+      <h3>Modo interativo</h3>
+      <div class="corpo" id="boxSliders">
+        <div class="slider"><label for="sL">Vão L</label><input type="range" id="sL" min="3" max="40" step="0.25"><output id="sLv"></output></div>
+        <div class="slider"><label for="sH">Altura h</label><input type="range" id="sH" min="20" max="250" step="1"><output id="sHv"></output></div>
+        <div class="slider"><label for="sQ">Carga variável q</label><input type="range" id="sQ" min="0" max="80" step="0.5"><output id="sQv"></output></div>
+        <div class="slider"><label for="sN">Nº cordoalhas</label><input type="range" id="sN" min="1" max="60" step="1"><output id="sNv"></output></div>
+        <div class="slider"><label for="sS">σ<sub>pi</sub></label><input type="range" id="sS" min="400" max="1600" step="10"><output id="sSv"></output></div>
+        <div class="slider"><label for="sE">e no meio do vão</label><input type="range" id="sE" min="-50" max="150" step="0.5"><output id="sEv"></output></div>
+        <div class="nota">Os resultados e todos os gráficos são recalculados em tempo real.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 7. PERDAS ================= -->
+<section class="painel" id="p-perdas">
+  <div class="grade larga">
+    <div class="cartao">
+      <h3>Fluxo da força de protensão</h3>
+      <div class="corpo"><div class="rolagem"><table id="tabPerdas"></table></div>
+        <details class="memoria"><summary>Memória das perdas de protensão</summary><div class="mem" id="memPerdas"></div></details>
+      </div>
+    </div>
+  </div>
+  <div class="grade">
+    <div class="cartao"><h3>Parâmetros de longa duração</h3>
+      <div class="corpo">
+        <div class="campos">
+          <div class="campo"><label for="umid">Umidade relativa <em>%</em></label><select id="umid"><option>40</option><option>55</option><option selected>75</option><option>90</option></select></div>
+          <div class="campo"><label for="tInf">Idade final t<sub>∞</sub> <em>dias</em></label><input id="tInf" type="number" step="100" value="10000"></div>
+          <div class="campo"><label for="hfic">h<sub>fic</sub> <em>cm</em></label><input id="hfic" type="number" step="0.5" value="0" readonly></div>
+          <div class="campo"><label for="fluencia">Fluência φ(t<sub>∞</sub>,t<sub>0</sub>)</label><input id="fluencia" type="number" step="0.05" value="0"></div>
+          <div class="campo"><label for="retracao">Retração ε<sub>cs</sub> <em>‰</em></label><input id="retracao" type="number" step="0.01" value="0"></div>
+          <div class="campo"><label for="autoLd">Estimar φ e ε<sub>cs</sub></label><select id="autoLd"><option value="1" selected>Automático (Tabela 8.2)</option><option value="0">Manual</option></select></div>
+        </div>
+        <div class="aviso-box">Valores de φ e ε<sub>cs</sub> estimados por interpolação da Tabela 8.2 da NBR 6118 — <b>verificação simplificada, requer validação pelo engenheiro responsável</b>. Para casos especiais utilize o Anexo A da norma.</div>
+      </div>
+    </div>
+    <div class="cartao"><h3>Perdas por etapa</h3><div class="corpo"><div class="graf" id="gPerdas"></div><div class="linha-bt"><button class="bt mini" data-png="gPerdas">PNG</button></div></div></div>
+    <div class="cartao"><h3>Força de protensão ao longo da viga</h3><div class="corpo"><div class="graf" id="gPx"></div><div class="linha-bt"><button class="bt mini" data-png="gPx">PNG</button></div></div></div>
+    <div class="cartao"><h3>Momento de protensão</h3><div class="corpo"><div class="graf" id="gMp"></div>
+      <div class="legenda"><span><i style="background:#164b77"></i>M externo</span><span><i style="background:#7a2f8f"></i>M protensão</span><span><i style="background:#137a4d"></i>M resultante</span></div>
+      <div class="linha-bt"><button class="bt mini" data-png="gMp">PNG</button></div></div></div>
+    <div class="cartao"><h3>Força efetiva × tempo</h3><div class="corpo"><div class="graf" id="gPt"></div></div></div>
+    <div class="cartao"><h3>Flecha × tempo</h3><div class="corpo"><div class="graf" id="gFt"></div></div></div>
+  </div>
+</section>
+
+<!-- ================= 8. ELU ================= -->
+<section class="painel" id="p-elu">
+  <div class="grade larga">
+    <div class="cartao"><h3>ELU — Flexão <small>seção crítica</small></h3>
+      <div class="corpo"><div class="rolagem"><table id="tabFlex"></table></div>
+        <details class="memoria"><summary>Memória do dimensionamento à flexão</summary><div class="mem" id="memFlex"></div></details>
+      </div>
+    </div>
+  </div>
+  <div class="grade">
+    <div class="cartao"><h3>Domínio de deformação</h3><div class="corpo"><div class="graf" id="gDom"></div>
+      <div class="rolagem" style="margin-top:8px"><table id="tabDom"></table></div></div></div>
+    <div class="cartao"><h3>M<sub>Sd</sub> × M<sub>Rd</sub></h3><div class="corpo"><div class="graf" id="gMrd"></div><div class="linha-bt"><button class="bt mini" data-png="gMrd">PNG</button></div></div></div>
+  </div>
+  <div class="grade larga">
+    <div class="cartao"><h3>ELU — Cisalhamento <small>Modelo I, NBR 6118 17.4.2.2</small></h3>
+      <div class="corpo"><div class="rolagem"><table id="tabCis"></table></div>
+        <details class="memoria"><summary>Memória do cisalhamento</summary><div class="mem" id="memCis"></div></details>
+      </div>
+    </div>
+    <div class="cartao"><h3>V<sub>Sd</sub> × V<sub>Rd</sub></h3><div class="corpo"><div class="graf" id="gVrd"></div>
+      <div class="legenda"><span><i style="background:#164b77"></i>V<sub>Sd</sub></span><span><i style="background:#b3261e"></i>V<sub>Rd2</sub></span><span><i style="background:#137a4d"></i>V<sub>Rd3</sub></span></div>
+      <div class="linha-bt"><button class="bt mini" data-png="gVrd">PNG</button></div></div></div>
+  </div>
+</section>
+
+<!-- ================= 9. ELS ================= -->
+<section class="painel" id="p-els">
+  <div class="grade larga">
+    <div class="cartao"><h3>Estágios de análise — tensões nas fibras extremas</h3>
+      <div class="corpo">
+        <div class="rolagem"><table id="tabFases"></table></div>
+        <details class="memoria"><summary>Convenção de sinais e equações das tensões</summary><div class="mem" id="memTens"></div></details>
+      </div>
+    </div>
+  </div>
+  <div class="grade">
+    <div class="cartao"><h3>Tensão na fibra superior</h3><div class="corpo"><div class="graf" id="gSsup"></div><div class="linha-bt"><button class="bt mini" data-png="gSsup">PNG</button></div></div></div>
+    <div class="cartao"><h3>Tensão na fibra inferior</h3><div class="corpo"><div class="graf" id="gSinf"></div><div class="linha-bt"><button class="bt mini" data-png="gSinf">PNG</button></div></div></div>
+  </div>
+  <div class="grade larga">
+    <div class="cartao"><h3>Verificações de serviço <small>NBR 6118 Tabela 13.4</small></h3>
+      <div class="corpo"><div class="rolagem"><table id="tabELS"></table></div>
+        <details class="memoria"><summary>Critérios exigidos para o caso em análise</summary><div class="mem" id="memELS"></div></details>
+      </div>
+    </div>
+    <div class="cartao"><h3>Deformações — flechas</h3>
+      <div class="corpo"><div class="rolagem"><table id="tabFlecha"></table></div>
+        <details class="memoria"><summary>Memória das flechas e da contraflecha</summary><div class="mem" id="memFlecha"></div></details>
+      </div>
+    </div>
+  </div>
+  <div class="grade">
+    <div class="cartao"><h3>Contraflecha × flecha de cargas</h3><div class="corpo"><div class="graf" id="gContra"></div>
+      <div class="legenda"><span><i style="background:#7a2f8f"></i>protensão</span><span><i style="background:#164b77"></i>cargas</span><span><i style="background:#137a4d"></i>resultante</span></div></div></div>
+    <div class="cartao"><h3>Rigidez</h3><div class="corpo"><div class="rolagem"><table id="tabRig"></table></div></div></div>
+  </div>
+</section>
+
+<!-- ================= 10. ARMADURAS ================= -->
+<section class="painel" id="p-armaduras">
+  <div class="grade">
+    <div class="cartao"><h3>Armadura ativa</h3><div class="corpo"><div class="rolagem"><table id="tabAtiva"></table></div></div></div>
+    <div class="cartao"><h3>Armadura passiva longitudinal</h3><div class="corpo"><div class="rolagem"><table id="tabPassiva"></table></div>
+      <details class="memoria"><summary>Armadura mínima e detalhamento</summary><div class="mem" id="memPassiva"></div></details></div></div>
+    <div class="cartao"><h3>Armadura transversal</h3><div class="corpo"><div class="rolagem"><table id="tabEstribos"></table></div></div></div>
+    <div class="cartao"><h3>Detalhamento da seção</h3><div class="corpo"><div class="graf" id="desDet"></div>
+      <div class="campos" style="margin-top:8px">
+        <div class="campo"><label for="nBarras">Barras longitudinais inferiores</label><input id="nBarras" type="number" min="0" step="1" value="4"></div>
+        <div class="campo"><label for="nBarras2">Barras superiores</label><input id="nBarras2" type="number" min="0" step="1" value="2"></div>
+        <div class="campo"><label for="camadas">Camadas de cordoalhas</label><input id="camadas" type="number" min="1" step="1" value="2"></div>
+      </div></div></div>
+  </div>
+</section>
+
+<!-- ================= 11. GRÁFICOS ================= -->
+<section class="painel" id="p-graficos">
+  <div class="cartao" style="margin-bottom:14px"><div class="corpo" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <span class="tag">Cursor vertical sincronizado entre todos os diagramas</span>
+    <span class="nota" style="margin:0" id="leituraCursor">Passe o mouse ou toque em qualquer gráfico.</span>
+  </div></div>
+  <div class="grade" id="galeria"></div>
+</section>
+
+<!-- ================= 12. RESULTADOS ================= -->
+<section class="painel" id="p-resultados">
+  <div class="grade">
+    <div class="cartao"><h3>Resumo estrutural</h3><div class="corpo"><div class="rolagem"><table id="tabResumo"></table></div></div></div>
+    <div class="cartao"><h3>Diagnóstico estrutural</h3><div class="corpo" id="diagnostico"></div></div>
+    <div class="cartao"><h3>Taxas de utilização</h3><div class="corpo" id="utilizacao"></div></div>
+    <div class="cartao"><h3>Comparação: concreto armado × protendido</h3><div class="corpo">
+      <div class="rolagem"><table id="tabComp"></table></div>
+      <div class="nota">A coluna “concreto armado” recalcula a mesma seção e o mesmo carregamento com A<sub>p</sub> = 0, dimensionando somente armadura passiva.</div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ================= 13. RELATÓRIO ================= -->
+<section class="painel" id="p-relatorio">
+  <div class="grade">
+    <div class="cartao"><h3>Exportação</h3><div class="corpo">
+      <div class="linha-bt">
+        <button class="bt" id="btPDF">Gerar relatório (PDF)</button>
+        <button class="bt" id="btCSV">Exportar CSV</button>
+        <button class="bt" id="btJSON">Exportar projeto (JSON)</button>
+        <button class="bt" id="btImport">Importar projeto</button>
+      </div>
+      <div class="nota">O relatório abre em nova janela já formatado para impressão — escolha “Salvar como PDF” na caixa de impressão. O CSV contém x, M, V, δ, P, e, σ<sub>sup</sub>, σ<sub>inf</sub>.</div>
+    </div></div>
+    <div class="cartao"><h3>Projetos salvos</h3><div class="corpo"><div id="listaProjetos"></div>
+      <div class="nota">Armazenamento local do navegador. Não é necessário login e nenhum dado sai do dispositivo.</div></div></div>
+    <div class="cartao"><h3>Testes do motor</h3><div class="corpo">
+      <div class="linha-bt"><button class="bt" id="btTestes">Executar testes</button></div>
+      <div id="saidaTestes"></div>
+    </div></div>
+    <div class="cartao"><h3>Hipóteses e limitações</h3><div class="corpo" id="limitacoes"></div></div>
+  </div>
+</section>
+</main>
+
+<div class="rodape-fixo">
+  <button class="bt calc" id="btCalcular">⚡ Calcular viga protendida</button>
+  <div class="resumo" id="resumoRodape"></div>
+</div>
+<script>
+'use strict';
+/* ============================================================
+   APavan — Vigas Protendidas
+   Arquitetura: ENGINE (cálculo) | UI (interface) | STORAGE | REPORT
+   ============================================================ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)?x:0;};
+const val=id=>{const e=$('#'+id);return e?num(e.value):0;};
+const sval=id=>{const e=$('#'+id);return e?e.value:'';};
+const setv=(id,v)=>{const e=$('#'+id);if(e)e.value=v;};
+const chk=id=>{const e=$('#'+id);return e?e.checked:false;};
+function fmt(v,d){d=(d===undefined)?2:d;if(v===null||v===undefined||!isFinite(v))return '—';
+  return v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function linspace(a,b,n){const r=new Array(n);for(let i=0;i<n;i++)r[i]=a+(b-a)*i/(n-1);return r;}
+function cumtrapz(x,y){const r=new Array(x.length);r[0]=0;
+  for(let i=1;i<x.length;i++)r[i]=r[i-1]+(y[i]+y[i-1])/2*(x[i]-x[i-1]);return r;}
+function extremos(x,y){let iMax=0,iMin=0;for(let i=0;i<y.length;i++){if(y[i]>y[iMax])iMax=i;if(y[i]<y[iMin])iMin=i;}
+  return {max:y[iMax],xMax:x[iMax],min:y[iMin],xMin:x[iMin],absMax:Math.max(Math.abs(y[iMax]),Math.abs(y[iMin]))};}
+function interp(x,xs,ys){if(x<=xs[0])return ys[0];const n=xs.length;if(x>=xs[n-1])return ys[n-1];
+  let lo=0,hi=n-1;while(hi-lo>1){const m=(lo+hi)>>1;if(xs[m]<=x)lo=m;else hi=m;}
+  const t=(x-xs[lo])/(xs[hi]-xs[lo]);return ys[lo]+t*(ys[hi]-ys[lo]);}
+const MPa=1000; // 1 MPa = 1000 kN/m²
+
+/* ============================================================
+   ENGINE
+   ============================================================ */
+const ENGINE=(function(){
+
+/* ---------- Seção ---------- */
+function partes(g){
+  if(g.tipo==='ret') return [{b:g.bw,h:g.h,y:0}];
+  if(g.tipo==='T')   return [{b:g.bf,h:g.hf,y:0},{b:g.bw,h:g.h-g.hf,y:g.hf}];
+  if(g.tipo==='I')   return [{b:g.bf,h:g.hf,y:0},{b:g.bw,h:g.h-g.hf-g.hfi,y:g.hf},{b:g.bfi,h:g.hfi,y:g.h-g.hfi}];
+  return (g.pers&&g.pers.length)?g.pers.map(p=>({b:p.b,h:p.h,y:p.ytop})):[{b:g.bw,h:g.h,y:0}];
+}
+function propSecao(g){
+  const ps=partes(g).filter(p=>p.b>0&&p.h>0);
+  let A=0,S=0;ps.forEach(p=>{const a=p.b*p.h;A+=a;S+=a*(p.y+p.h/2);});
+  if(A<=0) return {A:0,I:0,yt:0,yb:0,Wt:0,Wb:0,h:g.h,bw:g.bw,partes:ps,u:0,i:0,erro:true};
+  const yt=S/A, yb=g.h-yt;
+  let I=0;ps.forEach(p=>{const a=p.b*p.h;I+=p.b*Math.pow(p.h,3)/12+a*Math.pow(p.y+p.h/2-yt,2);});
+  let u;
+  if(g.tipo==='ret') u=2*(g.bw+g.h);
+  else if(g.tipo==='T') u=2*g.bf+2*g.h;
+  else if(g.tipo==='I') u=2*g.bf+2*g.bfi-2*g.bw+2*g.h;
+  else {u=0;ps.forEach(p=>{u+=2*p.h;});u+=2*Math.max.apply(null,ps.map(p=>p.b));}
+  return {A:A,I:I,yt:yt,yb:yb,Wt:I/yt,Wb:I/yb,h:g.h,bw:g.bw,partes:ps,u:u,i:Math.sqrt(I/A)};
+}
+function larguraEm(sec,y){let b=0;sec.partes.forEach(p=>{if(y>=p.y&&y<=p.y+p.h)b=Math.max(b,p.b);});return b;}
+
+/* ---------- Concreto ---------- */
+function propConcreto(m){
+  const fck=m.fck;
+  const fctm=fck<=50?0.3*Math.pow(fck,2/3):2.12*Math.log(1+0.11*fck);
+  const Eci=fck<=50?m.alfaE*5600*Math.sqrt(fck):21500*m.alfaE*Math.pow(fck/10+1.25,1/3);
+  const ai=Math.min(1,0.8+0.2*fck/80);
+  const Ecs=ai*Eci;
+  const ac=fck<=50?0.85:0.85*(1-(fck-50)/200);
+  const lam=fck<=50?0.8:0.8-(fck-50)/400;
+  const ec2=fck<=50?2.0:2.0+0.085*Math.pow(fck-50,0.53);
+  const ecu=fck<=50?3.5:2.6+35*Math.pow((90-fck)/100,4);
+  const nExp=fck<=50?2:1.4+23.4*Math.pow((90-fck)/100,4);
+  const bcc=Math.exp(m.sCim*(1-Math.sqrt(28/Math.max(m.t0,1))));
+  const fckj=Math.min(bcc,1.15)*fck;
+  const fctmj=fckj<=50?0.3*Math.pow(fckj,2/3):2.12*Math.log(1+0.11*fckj);
+  const Ecij=fck<=45?Math.sqrt(fckj/fck)*Eci:Math.pow(fckj/fck,0.3)*Eci;
+  const fcd=fck/m.gc;
+  return {fck:fck,fctm:fctm,fctkinf:0.7*fctm,fctksup:1.3*fctm,fctd:0.7*fctm/m.gc,
+    Eci:Eci,Ecs:Ecs,alfai:ai,fcd:fcd,sigmaCd:ac*fcd,alfac:ac,lambda:lam,
+    ec2:ec2,ecu:ecu,nExp:nExp,betacc:bcc,fckj:fckj,fctmj:fctmj,Ecij:Ecij,fcdj:fckj/m.gc};
+}
+
+/* ---------- Cabo ---------- */
+function cabo(cfg,L,xs){
+  const e=new Array(xs.length), dedx=new Array(xs.length), ang=new Array(xs.length);
+  if(cfg.perfil==='parab'){
+    const ea=cfg.eApoio, em=cfg.eMeio;
+    for(let i=0;i<xs.length;i++){const x=xs[i];
+      e[i]=ea+(em-ea)*4*x*(L-x)/(L*L);
+      dedx[i]=(em-ea)*4*(L-2*x)/(L*L);
+      ang[i]=Math.abs(8*(em-ea)*x/(L*L));}
+  }else if(cfg.perfil==='reto'){
+    for(let i=0;i<xs.length;i++){e[i]=cfg.eMeio;dedx[i]=0;ang[i]=0;}
+  }else{
+    const pts=(cfg.pontos||[]).slice().sort((a,b)=>a.x-b.x);
+    if(pts.length<2){for(let i=0;i<xs.length;i++){e[i]=cfg.eMeio;dedx[i]=0;ang[i]=0;}}
+    else{
+      const px=pts.map(p=>p.x),pe=pts.map(p=>p.e);
+      let acc=0,prevSlope=null;
+      for(let i=0;i<xs.length;i++){const x=xs[i];
+        e[i]=interp(x,px,pe);
+        let seg=0;for(let k=0;k<px.length-1;k++){if(x>=px[k]&&x<=px[k+1]){seg=k;break;}if(x>px[px.length-1])seg=px.length-2;}
+        const s=(pe[seg+1]-pe[seg])/Math.max(px[seg+1]-px[seg],1e-9);
+        dedx[i]=s;
+        if(prevSlope===null)prevSlope=s;
+        if(Math.abs(s-prevSlope)>1e-9){acc+=Math.abs(s-prevSlope);prevSlope=s;}
+        ang[i]=acc;}
+    }
+  }
+  return {e:e,dedx:dedx,ang:ang};
+}
+
+/* ---------- Esforços de um caso de carga ---------- */
+function esforcos(caso,L,xs){
+  const n=xs.length, w=new Array(n).fill(0);
+  (caso.dist||[]).forEach(d=>{const x1=Math.max(0,Math.min(d.x1,d.x2)),x2=Math.min(L,Math.max(d.x1,d.x2));
+    if(x2<=x1)return;
+    for(let i=0;i<n;i++){const x=xs[i];
+      if(x>=x1&&x<=x2){const t=(x-x1)/Math.max(x2-x1,1e-9);w[i]+=d.q1+(d.q2-d.q1)*t;}}});
+  const W=cumtrapz(xs,w);                 // resultante acumulada
+  const MW=cumtrapz(xs,W);                // momento das distribuídas
+  const Rdist=W[n-1];
+  let somaMB=0;                           // momento em torno do apoio B
+  // reação A por equilíbrio de momentos em B
+  let momA=0;
+  for(let i=0;i<n;i++){/* nada */}
+  const centroide = Rdist>1e-12 ? (function(){
+      let s=0;for(let i=1;i<n;i++){const xm=(xs[i]+xs[i-1])/2, dw=(w[i]+w[i-1])/2*(xs[i]-xs[i-1]);s+=dw*xm;}return s/Rdist;})() : 0;
+  momA += Rdist*(L-centroide);
+  let Pt=0,Mt=0;
+  (caso.pontos||[]).forEach(p=>{momA+=p.P*(L-p.x);Pt+=p.P;});
+  (caso.momentos||[]).forEach(m=>{momA-=m.M;Mt+=m.M;});
+  const Ra=momA/L, Rb=Rdist+Pt-Ra;
+  const V=new Array(n),M=new Array(n);
+  for(let i=0;i<n;i++){const x=xs[i];
+    let v=Ra-W[i], m=Ra*x-MW[i];
+    (caso.pontos||[]).forEach(p=>{if(x>p.x+1e-9){v-=p.P;m-=p.P*(x-p.x);}else if(Math.abs(x-p.x)<=1e-9){v-=p.P;}});
+    (caso.momentos||[]).forEach(mm=>{if(x>mm.x+1e-9)m-=mm.M;});
+    V[i]=v;M[i]=m;}
+  return {V:V,M:M,Ra:Ra,Rb:Rb,R:Rdist+Pt,w:w};
+}
+
+/* ---------- Flecha por integração de M/EI ---------- */
+function flecha(xs,M,EI){
+  const n=xs.length,k=new Array(n);
+  for(let i=0;i<n;i++)k[i]=-M[i]/EI;
+  const th=cumtrapz(xs,k);
+  let v=cumtrapz(xs,th);
+  const L=xs[n-1], c=-v[n-1]/L;
+  for(let i=0;i<n;i++)v[i]=v[i]+c*xs[i];
+  return v;
+}
+
+/* ---------- Relaxação ---------- */
+function psi1000(rel,r){
+  const tab=rel==='RN'?[[0.5,0],[0.6,3.5],[0.7,7.0],[0.8,12.0]]:[[0.5,0],[0.6,1.3],[0.7,2.5],[0.8,3.5]];
+  if(r<=tab[0][0])return 0;
+  for(let i=1;i<tab.length;i++){if(r<=tab[i][0]){const t=(r-tab[i-1][0])/(tab[i][0]-tab[i-1][0]);
+    return tab[i-1][1]+t*(tab[i][1]-tab[i-1][1]);}}
+  return tab[3][1]*r/0.8;
+}
+/* ---------- Fluência e retração (Tabela 8.2 — estimativa) ---------- */
+const T82={
+  40:{fi:{5:[4.6,3.8],30:[3.4,3.0],60:[2.9,2.6]},ecs:{5:[-0.53,-0.47],30:[-0.48,-0.43],60:[-0.44,-0.40]}},
+  55:{fi:{5:[3.8,3.3],30:[2.9,2.6],60:[2.5,2.2]},ecs:{5:[-0.44,-0.39],30:[-0.41,-0.36],60:[-0.37,-0.33]}},
+  75:{fi:{5:[3.0,2.6],30:[2.2,2.1],60:[2.0,1.8]},ecs:{5:[-0.30,-0.27],30:[-0.28,-0.25],60:[-0.26,-0.23]}},
+  90:{fi:{5:[2.3,2.1],30:[1.7,1.6],60:[1.5,1.4]},ecs:{5:[-0.12,-0.11],30:[-0.11,-0.10],60:[-0.10,-0.09]}}
+};
+function longaDuracao(U,t0,hfic_cm){
+  const us=[40,55,75,90];let u=us[0];for(const k of us)if(Math.abs(k-U)<Math.abs(u-U))u=k;
+  const t0s=[5,30,60];let t=t0s[0];for(const k of t0s)if(Math.abs(k-t0)<Math.abs(t-t0))t=k;
+  const th=Math.max(0,Math.min(1,(hfic_cm-20)/40)); // interpola h=20cm -> 60cm
+  const fi=T82[u].fi[t], ec=T82[u].ecs[t];
+  return {fi:fi[0]+(fi[1]-fi[0])*th, ecs:(ec[0]+(ec[1]-ec[0])*th)/1000, U:u, t0ref:t};
+}
+
+/* ---------- Tensão no concreto (parábola-retângulo) ---------- */
+function sigmaC(eps,mc){
+  if(eps<=0)return 0;
+  const e2=mc.ec2/1000;
+  if(eps>=e2)return mc.sigmaCd;
+  return mc.sigmaCd*(1-Math.pow(1-eps/e2,mc.nExp));
+}
+function resultanteC(sec,mc,x,epsTop){
+  const hc=Math.min(x,sec.h),n=60,dy=hc/n;let R=0,S=0;
+  for(let i=0;i<n;i++){const y=(i+0.5)*dy;const eps=epsTop*(x-y)/x;
+    const s=sigmaC(eps,mc)*MPa;const b=larguraEm(sec,y);const dF=s*b*dy;R+=dF;S+=dF*y;}
+  return {R:R,yc:R>1e-9?S/R:0};
+}
+function sigmaS(eps,fyd,Es){const s=Es*eps;return Math.sign(s)*Math.min(Math.abs(s),fyd);}
+function sigmaP(eps,ap){ // bilinear com endurecimento
+  if(eps<=0)return 0;
+  const epyd=ap.fpyd/ap.Ep;
+  if(eps<=epyd)return ap.Ep*eps;
+  const eu=0.035;
+  if(eps>=eu)return ap.fptd;
+  return ap.fpyd+(ap.fptd-ap.fpyd)*(eps-epyd)/(eu-epyd);
+}
+/* ---------- Capacidade à flexão (equilíbrio + compatibilidade) ---------- */
+function flexao(sec,mc,d){
+  const ecu=mc.ecu/1000;
+  function estado(x){
+    let epsTop=ecu;
+    const T=(z)=>epsTop*(z-x)/x;          // deformação de TRAÇÃO positiva
+    let es=d.As>0?T(d.ds):0, dep=d.Ap>0?T(d.dp):0;
+    let epT=d.epre+dep;
+    if((d.As>0&&es>0.010)||(d.Ap>0&&epT>0.035)){
+      let k=Infinity;
+      if(d.As>0&&es>0.010&&d.ds>x) k=Math.min(k,0.010*x/(d.ds-x));
+      if(d.Ap>0&&epT>0.035&&d.dp>x) k=Math.min(k,(0.035-d.epre)*x/(d.dp-x));
+      if(isFinite(k)&&k>0)epsTop=Math.min(epsTop,k);
+    }
+    const g=(z)=>epsTop*(z-x)/x;
+    es=d.As>0?g(d.ds):0; dep=d.Ap>0?g(d.dp):0; epT=d.epre+dep;
+    const es2=d.As2>0?-g(d.ds2):0;        // compressão positiva na armadura superior
+    const cc=resultanteC(sec,mc,x,epsTop);
+    const Rs=d.As*sigmaS(es,d.fyd,d.Es)*MPa;
+    const Rp=d.Ap*sigmaP(epT,d.ap)*MPa;
+    const Rs2=d.As2*sigmaS(es2,d.fyd,d.Es)*MPa;
+    return {x:x,epsTop:epsTop,es:es,ep:epT,dep:dep,es2:es2,Rcc:cc.R,yc:cc.yc,Rs:Rs,Rp:Rp,Rs2:Rs2,
+            res:cc.R+Rs2-Rs-Rp};
+  }
+  let lo=1e-4*sec.h,hi=1.5*sec.h,st=null;
+  if(estado(hi).res<0){st=estado(hi);st.aviso='Equilíbrio não atingido — seção insuficiente.';}
+  else{for(let i=0;i<90;i++){const m=(lo+hi)/2;if(estado(m).res>0)hi=m;else lo=m;}st=estado((lo+hi)/2);}
+  const MRd=st.Rp*(d.dp-st.yc)+st.Rs*(d.ds-st.yc)+st.Rs2*(st.yc-d.ds2);
+  const dref=d.Ap>0?d.dp:d.ds;
+  // limites de deformação do aço que pivota (ativo: ε total ≤ 35‰ ; passivo: 10‰)
+  const eLim=(d.As>0&&d.Ap<=0)?0.010:Math.max(0.035-d.epre,1e-4);
+  const eEsc=(d.As>0&&d.Ap<=0)?d.fyd/d.Es:Math.max(d.ap.fpyd/d.ap.Ep-d.epre,1e-4);
+  const x23=ecu/(ecu+eLim)*dref, x34=ecu/(ecu+eEsc)*dref;
+  const pivotC=Math.abs(st.epsTop-ecu)<1e-12;
+  let dom;
+  if(!pivotC)dom='2';
+  else if(st.x<=x34)dom='3';
+  else if(st.x<=dref)dom='4';
+  else if(st.x<=sec.h)dom='4a';else dom='5';
+  return Object.assign(st,{MRd:MRd,dominio:dom,x23:x23,x34:x34,dref:dref});
+}
+
+/* ============================================================
+   RODAR — orquestração completa
+   ============================================================ */
+function rodar(m){
+  const av=[];                               // avisos
+  const sec=propSecao(m.geo);
+  const mc=propConcreto(m.conc);
+  const L=m.geo.L, n=m.npts, xs=linspace(0,L,n);
+  const fyd=(m.aco.tipo==='60'?600:500)/m.aco.gs, Es=m.aco.Es;
+  const ap={Ep:m.prot.Ep,fptk:m.prot.fptk,fpyk:m.prot.fpyk,
+            fpyd:m.prot.fpyk/m.aco.gs,fptd:m.prot.fptk/m.aco.gs};
+
+  /* ---- validações ---- */
+  if(L<=0)av.push({t:'erro',m:'O vão deve ser maior que zero.'});
+  if(m.conc.fck<20||m.conc.fck>90)av.push({t:'erro',m:'f<sub>ck</sub> fora do intervalo da NBR 6118 (20 a 90 MPa).'});
+  if(sec.A<=0)av.push({t:'erro',m:'Seção com área nula ou dimensões inválidas.'});
+  if(m.geo.cob<=0||m.geo.cob>=m.geo.h/2)av.push({t:'erro',m:'Cobrimento incompatível com a altura da seção.'});
+  if(m.prot.n<1)av.push({t:'erro',m:'Número de cordoalhas deve ser no mínimo 1.'});
+  if(m.prot.sigmaPi<=0)av.push({t:'erro',m:'Tensão inicial de protensão deve ser positiva.'});
+
+  /* ---- limites da armadura ativa ---- */
+  const rel=m.prot.classe.indexOf('RN')>=0?'RN':'RB';
+  let lim;
+  if(m.prot.sistema==='pre')lim=rel==='RB'?{a:0.77,b:0.85}:{a:0.77,b:0.90};
+  else lim=rel==='RB'?{a:0.74,b:0.82}:{a:0.74,b:0.87};
+  const sigmaLim=Math.min(lim.a*ap.fptk,lim.b*ap.fpyk);
+  if(m.prot.sigmaPi>sigmaLim+1e-6)
+    av.push({t:'erro',m:'σ<sub>pi</sub> = '+fmt(m.prot.sigmaPi)+' MPa excede o limite de '+fmt(sigmaLim)+' MPa (NBR 6118 9.6.1.2.1).'});
+
+  const Ap=m.prot.n*m.prot.Ap1;               // m²
+  const P0=m.prot.sigmaPi*MPa*Ap;             // kN
+
+  /* ---- cabo ---- */
+  const cb=cabo(m.cabo,L,xs);
+  const eLim=sec.yb-m.geo.cob-0.03;
+  let foraSecao=false;
+  for(let i=0;i<n;i++){if(cb.e[i]>eLim+1e-6||cb.e[i]<-(sec.yt-m.geo.cob-0.03))foraSecao=true;}
+  if(foraSecao)av.push({t:'erro',m:'A posição do cabo está fora da região disponível considerando o cobrimento informado (e<sub>máx</sub> ≈ '+fmt(eLim*100)+' cm).'});
+
+  /* ---- cargas ---- */
+  const gpp=m.cargas.ppAuto?sec.A*m.conc.peso:m.cargas.gpp;
+  const casoG1={dist:[{x1:0,x2:L,q1:gpp,q2:gpp}],pontos:[],momentos:[]};
+  const casoG2={dist:[{x1:0,x2:L,q1:m.cargas.g2,q2:m.cargas.g2}],pontos:[],momentos:[]};
+  const casoQ ={dist:[{x1:0,x2:L,q1:m.cargas.q,q2:m.cargas.q}],pontos:[],momentos:[]};
+  m.cargas.pontos.forEach(p=>{(p.caso==='q'?casoQ:casoG2).pontos.push({x:p.x,P:p.P});});
+  m.cargas.momentos.forEach(p=>{(p.caso==='q'?casoQ:casoG2).momentos.push({x:p.x,M:p.M});});
+  m.cargas.dist.forEach(p=>{(p.caso==='q'?casoQ:casoG2).dist.push({x1:p.x1,x2:p.x2,q1:p.q1,q2:p.q2});});
+  const E1=esforcos(casoG1,L,xs),E2=esforcos(casoG2,L,xs),EQ=esforcos(casoQ,L,xs);
+  const Mg=xs.map((x,i)=>E1.M[i]+E2.M[i]), Vg=xs.map((x,i)=>E1.V[i]+E2.V[i]);
+  const Mq=EQ.M, Vq=EQ.V;
+  const iMid=Math.round((n-1)/2);
+
+  /* ---- perdas imediatas ---- */
+  const Pfric=new Array(n),Panc=new Array(n),Pimd=new Array(n),Pinf=new Array(n);
+  for(let i=0;i<n;i++){
+    if(m.prot.sistema==='pre')Pfric[i]=P0;
+    else{
+      const a=P0*Math.exp(-(m.prot.mu*cb.ang[i]+m.prot.k*xs[i]));
+      if(m.prot.lados==='2'){const j=n-1-i;const b=P0*Math.exp(-(m.prot.mu*Math.abs(cb.ang[n-1]-cb.ang[j])+m.prot.k*(L-xs[i])));
+        Pfric[i]=Math.max(a,b);}else Pfric[i]=a;
+    }
+  }
+  const perdaFric=P0-Pfric[iMid];
+  // acomodação da ancoragem
+  let lp=0,perdaAnc=0;
+  if(m.prot.sistema!=='pre'&&m.prot.slip>0){
+    const grad=Math.max((P0-Pfric[n-1])/L,1e-6);             // kN/m
+    lp=Math.sqrt(m.prot.slip/1000*ap.Ep*MPa*Ap/grad);
+    if(lp<=L){for(let i=0;i<n;i++){const d=Math.max(0,lp-xs[i]);Panc[i]=Pfric[i]-2*grad*d;}}
+    else{ // encravamento em todo o vão: ΔP(x) = ΔP₀ − 2ω·x com ∫ΔP dx = δ·Ep·Ap
+      const dP0=(m.prot.slip/1000*ap.Ep*MPa*Ap+grad*L*L)/L;
+      for(let i=0;i<n;i++)Panc[i]=Math.max(Pfric[i]-Math.max(dP0-2*grad*xs[i],0),0);
+      av.push({t:'aviso',m:'O comprimento de penetração da ancoragem ('+fmt(lp,2)+' m) supera o vão: a acomodação foi distribuída ao longo de todo o cabo impondo ∫ΔP dx = δ·E<sub>p</sub>·A<sub>p</sub>. <b>Verificação simplificada — requer validação pelo engenheiro responsável.</b>'});}
+    perdaAnc=Pfric[iMid]-Panc[iMid];
+  }else for(let i=0;i<n;i++)Panc[i]=Pfric[i];
+  // encurtamento elástico (seção crítica)
+  const Pa=Panc[iMid], eM=cb.e[iMid];
+  const sigCp0=-(Pa/sec.A+Pa*eM*eM/sec.I)+Mg[iMid]*eM/sec.I;   // kN/m² (negativo = compressão)
+  const alfaP0=ap.Ep/mc.Ecij;
+  let dSigEl;
+  if(m.prot.sistema==='pre')dSigEl=alfaP0*Math.abs(sigCp0)/MPa;
+  else{const nc=Math.max(m.prot.nCabos,1);dSigEl=alfaP0*Math.abs(sigCp0)/MPa*(nc-1)/(2*nc);}
+  const perdaEl=dSigEl*MPa*Ap;
+  for(let i=0;i<n;i++)Pimd[i]=Math.max(Panc[i]-perdaEl,0);
+
+  /* ---- perdas progressivas (processo simplificado 9.6.3.4.2) ---- */
+  const hfic=(function(){const g=1+Math.exp(-7.8+0.1*m.ld.U);return g*2*sec.A/sec.u*100;})(); // cm
+  const ld=longaDuracao(m.ld.U,m.conc.t0,hfic);
+  const fi=m.ld.auto?ld.fi:m.ld.fi;
+  const ecs=m.ld.auto?ld.ecs:m.ld.ecs/1000;
+  const sigmaP0=Pimd[iMid]/Ap/MPa;                                  // MPa
+  const psiT=Math.min(psi1000(rel,m.prot.sigmaPi/ap.fptk)/100*Math.pow(m.ld.tInf*24/1000,0.15),
+                      2.5*psi1000(rel,m.prot.sigmaPi/ap.fptk)/100);
+  const chi=-Math.log(Math.max(1-psiT,1e-6));
+  const alfaP=ap.Ep/mc.Ecs;
+  const etaP=1+eM*eM*sec.A/sec.I;
+  const rhoP=Ap/sec.A;
+  const Pi=Pimd[iMid];
+  const sigCpg=-(Pi/sec.A+Pi*eM*eM/sec.I)+Mg[iMid]*eM/sec.I;        // kN/m²
+  const numRet=Math.abs(ecs)*ap.Ep;
+  const numFlu=alfaP*Math.abs(sigCpg)/MPa*fi;
+  const numRel=sigmaP0*chi;
+  const den=(1+chi)+(1+0.5*fi)*alfaP*etaP*rhoP;
+  const dSigProg=(numRet+numFlu+numRel)/den;
+  const parte=v=>dSigProg*(v/(numRet+numFlu+numRel||1));
+  const perdaRet=parte(numRet)*MPa*Ap, perdaFlu=parte(numFlu)*MPa*Ap, perdaRel=parte(numRel)*MPa*Ap;
+  const perdaProg=dSigProg*MPa*Ap;
+  for(let i=0;i<n;i++)Pinf[i]=Math.max(Pimd[i]-perdaProg,0);
+
+  const Pinf0=Pinf[iMid], Pimd0=Pimd[iMid];
+  if(Pinf0<=0)av.push({t:'erro',m:'A força efetiva resultou nula ou negativa — revise a protensão e as perdas.'});
+
+  /* ---- momento de protensão e resultante ---- */
+  const Mp=xs.map((x,i)=>-Pinf[i]*cb.e[i]);
+  const MpI=xs.map((x,i)=>-Pimd[i]*cb.e[i]);
+  const Mres=xs.map((x,i)=>Mg[i]+Mq[i]+Mp[i]);
+
+  /* ---- tensões por fase ---- */
+  function tensoes(P,Mext,i){
+    const e=cb.e[i], Mt=Mext-P*e;
+    return {sup:(-P/sec.A-Mt*sec.yt/sec.I)/MPa, inf:(-P/sec.A+Mt*sec.yb/sec.I)/MPa};
+  }
+  const fases=[
+    {id:1,nome:'Protensão (apenas P)',P:Pimd,M:xs.map(()=>0),t:'t₀'},
+    {id:2,nome:'Transferência (P + peso próprio)',P:Pimd,M:E1.M,t:'t₀'},
+    {id:3,nome:'P + permanentes totais',P:Pimd,M:Mg,t:'t₀'},
+    {id:4,nome:'Serviço — permanentes (P∞)',P:Pinf,M:Mg,t:'t∞'},
+    {id:5,nome:'Quase permanente (g + ψ₂q)',P:Pinf,M:xs.map((x,i)=>Mg[i]+m.comb.psi2*Mq[i]),t:'t∞'},
+    {id:6,nome:'Frequente (g + ψ₁q)',P:Pinf,M:xs.map((x,i)=>Mg[i]+m.comb.psi1*Mq[i]),t:'t∞'},
+    {id:7,nome:'Rara (g + q)',P:Pinf,M:xs.map((x,i)=>Mg[i]+Mq[i]),t:'t∞'}
+  ];
+  fases.forEach(f=>{
+    f.sup=xs.map((x,i)=>tensoes(f.P[i],f.M[i],i).sup);
+    f.inf=xs.map((x,i)=>tensoes(f.P[i],f.M[i],i).inf);
+    f.supMid=f.sup[iMid];f.infMid=f.inf[iMid];
+    f.supAp=f.sup[0];f.infAp=f.inf[0];
+  });
+
+  /* ---- ELU flexão ---- */
+  const MdArr=xs.map((x,i)=>m.comb.gg*Mg[i]+m.comb.gq*Mq[i]);
+  const exMd=extremos(xs,MdArr);
+  const dp=sec.yt+cb.e[iMid];
+  const ds=Math.min(sec.h-m.geo.cob-0.01,sec.h-0.05);
+  const epre=Pinf0/Ap/MPa/ap.Ep + (Pinf0/(mc.Ecs*MPa))*(1/sec.A+eM*eM/sec.I);
+  const dadosBase={Ap:Ap,dp:dp,As:0,ds:ds,As2:0,ds2:m.geo.dl,fyd:fyd,Es:Es,ap:ap,epre:epre};
+  let fl=flexao(sec,mc,dadosBase);
+  let AsNec=0;
+  if(fl.MRd<exMd.max){
+    let lo=0,hi=0.04*sec.A;
+    const f=(As)=>flexao(sec,mc,Object.assign({},dadosBase,{As:As})).MRd-exMd.max;
+    if(f(hi)<0){AsNec=hi;av.push({t:'erro',m:'A seção não atinge o momento resistente exigido mesmo com taxa máxima de armadura (4% A<sub>c</sub>). Revisar geometria, f<sub>ck</sub> ou protensão.'});}
+    else{for(let i=0;i<60;i++){const mid=(lo+hi)/2;if(f(mid)>0)hi=mid;else lo=mid;}AsNec=(lo+hi)/2;}
+    fl=flexao(sec,mc,Object.assign({},dadosBase,{As:AsNec}));
+  }
+  // armadura mínima
+  const rhoMin=Math.max(0.0015,0.035*mc.fcd/fyd);
+  const AsMinTx=rhoMin*sec.A;
+  const MdMin=0.8*sec.Wb*mc.fctksup*MPa;
+  const MRdSemAs=flexao(sec,mc,dadosBase).MRd;
+  let AsMin=0;
+  if(MRdSemAs<MdMin){
+    let lo=0,hi=0.04*sec.A;
+    const f=(As)=>flexao(sec,mc,Object.assign({},dadosBase,{As:As})).MRd-MdMin;
+    if(f(hi)>0){for(let i=0;i<50;i++){const mid=(lo+hi)/2;if(f(mid)>0)hi=mid;else lo=mid;}AsMin=(lo+hi)/2;}
+    else AsMin=hi;
+  }
+  const AsAdot=Math.max(AsNec,AsMin);
+  const MRdArr=xs.map((x,i)=>{
+    const dpi=sec.yt+cb.e[i];
+    const epi=Pinf[i]>0?(Pinf[i]/Ap/MPa/ap.Ep+(Pinf[i]/(mc.Ecs*MPa))*(1/sec.A+cb.e[i]*cb.e[i]/sec.I)):0;
+    return flexao(sec,mc,Object.assign({},dadosBase,{As:AsAdot,dp:dpi,epre:epi})).MRd;});
+
+  /* ---- ELU cisalhamento (Modelo I) ---- */
+  const VdArr=xs.map((x,i)=>m.comb.gg*Vg[i]+m.comb.gq*Vq[i]);
+  const alfaV2=1-mc.fck/250;
+  const dCis=dp;
+  const VRd2=0.27*alfaV2*mc.fcd*MPa*sec.bw*dCis;
+  const Vc0=0.6*mc.fctd*MPa*sec.bw*dCis;
+  const M0=Pinf0*(sec.Wb/sec.A+eM);
+  const MsdMax=Math.max(Math.abs(exMd.max),1e-6);
+  const Vc=Math.min(Vc0*(1+M0/MsdMax),2*Vc0);
+  const fywd=Math.min(fyd,435);
+  const VdAp=Math.max(Math.abs(VdArr[0]),Math.abs(VdArr[n-1]));
+  const Vsw=Math.max(VdAp-Vc,0);
+  const AswS=Vsw/(0.9*dCis*fywd*MPa);                       // m²/m
+  const AswMin=0.2*mc.fctm/(m.aco.tipo==='60'?600:500)*sec.bw;
+  const AswAdot=Math.max(AswS,AswMin);
+  const smax=VdAp<=0.67*VRd2?Math.min(0.6*dCis,0.30):Math.min(0.3*dCis,0.20);
+  const Aest=Math.PI*Math.pow(m.aco.phiEst/1000,2)/4*m.aco.ramos;
+  const sEst=Math.min(Aest/AswAdot,smax);
+  const VRd3=Vc+AswAdot*0.9*dCis*fywd*MPa;
+
+  /* ---- ELS ---- */
+  const combELS=(function(){
+    const s=m.prot.sistema,caa=m.conc.caa;
+    if(s==='posN')return caa<=1?{tipo:'Protensão parcial',ex:[['ELS-W (w≤0,2 mm)','frequente']]}
+      :{tipo:'Protensão parcial',ex:[['ELS-W (w≤0,2 mm)','frequente'],['ELS-D','quase permanente']]};
+    if(s==='pre'){
+      if(caa<=1)return {tipo:'Protensão parcial',ex:[['ELS-W (w≤0,2 mm)','frequente']]};
+      if(caa===2)return {tipo:'Protensão limitada',ex:[['ELS-F','frequente'],['ELS-D','quase permanente']]};
+      return {tipo:'Protensão completa',ex:[['ELS-F','rara'],['ELS-D','frequente']]};
+    }
+    if(caa<=2)return {tipo:'Protensão parcial',ex:[['ELS-W (w≤0,2 mm)','frequente']]};
+    return {tipo:'Protensão limitada',ex:[['ELS-F','frequente'],['ELS-D','quase permanente']]};
+  })();
+  const faseDe=nome=>({'rara':fases[6],'frequente':fases[5],'quase permanente':fases[4]}[nome]);
+  const verELS=combELS.ex.map(([lim,cb2])=>{
+    const f=faseDe(cb2);
+    const sInf=Math.max.apply(null,f.inf), sSup=Math.max.apply(null,f.sup);
+    const st=Math.max(sInf,sSup);
+    if(lim.indexOf('ELS-D')===0)return {estado:'ELS-D — descompressão',comb:cb2,valor:st,limite:0,
+      sit:st<=1e-6?'ok':'no',unid:'MPa',obs:'Tração nula em toda a seção.'};
+    if(lim.indexOf('ELS-F')===0)return {estado:'ELS-F — formação de fissuras',comb:cb2,valor:st,limite:mc.fctkinf,
+      sit:st<=mc.fctkinf?'ok':(st<=mc.fctm?'at':'no'),unid:'MPa',obs:'Limite adotado: f<sub>ctk,inf</sub>.'};
+    return {estado:'ELS-W — abertura de fissuras',comb:cb2,valor:null,limite:0.2,sit:'calc',unid:'mm',obs:''};
+  });
+  // fissuração
+  const alfaFct=(m.geo.tipo==='ret')?1.5:1.2;
+  const Mr=alfaFct*mc.fctm*MPa*sec.Wb+M0;
+  const fFreq=fases[5];
+  const MfreqMax=Math.max.apply(null,fFreq.M);
+  let wk=null,sigmaSFis=0;
+  if(MfreqMax>Mr){
+    const AsEq=AsAdot+(m.prot.sistema==='posN'?0:Ap);
+    if(AsEq>0){
+      sigmaSFis=(MfreqMax-M0)/(0.87*dp*AsEq)/MPa;
+      const phi=m.aco.phiLong/1000, eta=2.25;
+      const Acri=Math.min(sec.bw*Math.min(0.15*sec.h*2,2.5*(sec.h-dp)*2),sec.bw*sec.h);
+      const rhoR=AsEq/Math.max(Acri,1e-6);
+      const w1=phi/(12.5*eta)*(sigmaSFis/(Es))*(3*sigmaSFis/mc.fctm)*1000;
+      const w2=phi/(12.5*eta)*(sigmaSFis/(Es))*(4/rhoR+45)*1000;
+      wk=Math.min(w1,w2);
+    }
+  }else wk=0;
+  verELS.forEach(v=>{if(v.sit==='calc'){v.valor=wk;v.sit=(wk===null)?'nd':(wk<=0.2?'ok':'no');
+    v.obs=(MfreqMax<=Mr)?'Seção não fissurada na combinação frequente (M<sub>freq</sub> ≤ M<sub>r</sub>).':'Verificação simplificada — requer validação pelo engenheiro responsável.';}});
+
+  /* ---- flechas ---- */
+  const EI=mc.Ecs*MPa*sec.I;
+  const dG=flecha(xs,Mg,EI);
+  const dQ=flecha(xs,Mq,EI);
+  const dP=flecha(xs,Mp,EI);
+  const dQP=xs.map((x,i)=>dG[i]+m.comb.psi2*dQ[i]+dP[i]);
+  const dImed=xs.map((x,i)=>dG[i]+dQ[i]+dP[i]);
+  const dInf=dQP.map(v=>v*(1+fi));
+  const limFl=L/250;
+  const exImed=extremos(xs,dImed), exInf=extremos(xs,dInf), exP=extremos(xs,dP);
+  const fissurada=MfreqMax>Mr;
+  if(fissurada)av.push({t:'aviso',m:'A combinação frequente supera o momento de fissuração — as flechas foram calculadas com rigidez da seção bruta (E<sub>cs</sub>·I<sub>c</sub>). O cálculo com rigidez equivalente de seção fissurada <b>não está implementado</b>: verificar manualmente.'});
+
+  /* ---- série temporal ---- */
+  const tempos=[m.conc.t0,14,30,60,90,180,365,1000,3000,m.ld.tInf].filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
+  const serieP=tempos.map(t=>{
+    const r=Math.min(1,Math.pow(Math.max(t-m.conc.t0,0)/Math.max(m.ld.tInf-m.conc.t0,1),0.35));
+    return Pimd0-perdaProg*r;});
+  const serieF=tempos.map(t=>{
+    const r=Math.min(1,Math.pow(Math.max(t-m.conc.t0,0)/Math.max(m.ld.tInf-m.conc.t0,1),0.35));
+    return (exImed.max||exImed.min)*(1+fi*r);});
+
+  /* ---- verificação de equilíbrio ---- */
+  const cargaTotal=(gpp+m.cargas.g2+m.cargas.q)*L
+    +m.cargas.pontos.reduce((s,p)=>s+p.P,0)
+    +m.cargas.dist.reduce((s,d)=>s+(d.q1+d.q2)/2*Math.abs(d.x2-d.x1),0);
+  const reacao=E1.Ra+E1.Rb+E2.Ra+E2.Rb+EQ.Ra+EQ.Rb;
+  const erroEq=Math.abs(cargaTotal-reacao)/Math.max(cargaTotal,1e-9);
+  if(erroEq>1e-3)av.push({t:'erro',m:'ERRO DE EQUILÍBRIO — verificar dados de entrada (ΣF = '+fmt(cargaTotal-reacao,4)+' kN).'});
+
+  /* ---- utilizações e diagnóstico ---- */
+  const uFlex=exMd.max/Math.max(fl.MRd,1e-9);
+  const uCis=VdAp/Math.max(VRd2,1e-9);
+  const uCisArm=VdAp/Math.max(VRd3,1e-9);
+  const sigMaxComp=Math.min.apply(null,fases[6].sup.concat(fases[6].inf));
+  const uTens=Math.abs(sigMaxComp)/(0.6*mc.fck);
+  const sigTransf=Math.min.apply(null,fases[1].sup.concat(fases[1].inf));
+  const uTransf=Math.abs(sigTransf)/(0.7*mc.fckj);
+  const uFlecha=Math.abs(exInf.max)/limFl;
+  const uProt=m.prot.sigmaPi/sigmaLim;
+  const tracaoTransf=Math.max.apply(null,fases[1].sup.concat(fases[1].inf));
+
+  return {ok:!av.some(a=>a.t==='erro'),avisos:av,xs:xs,n:n,iMid:iMid,L:L,sec:sec,mc:mc,ap:ap,
+    Ap:Ap,P0:P0,sigmaLim:sigmaLim,rel:rel,gpp:gpp,
+    cabo:cb,E1:E1,E2:E2,EQ:EQ,Mg:Mg,Vg:Vg,Mq:Mq,Vq:Vq,
+    Pfric:Pfric,Panc:Panc,Pimd:Pimd,Pinf:Pinf,Pimd0:Pimd0,Pinf0:Pinf0,
+    perdas:{fric:perdaFric,anc:perdaAnc,el:perdaEl,ret:perdaRet,flu:perdaFlu,rel:perdaRel,
+            prog:perdaProg,lp:lp,dSigEl:dSigEl,dSigProg:dSigProg,psi:psiT,chi:chi,
+            fi:fi,ecs:ecs,hfic:hfic,alfaP:alfaP,etaP:etaP,rhoP:rhoP,
+            numRet:numRet,numFlu:numFlu,numRel:numRel,den:den,sigCpg:sigCpg,sigCp0:sigCp0,ld:ld},
+    Mp:Mp,MpI:MpI,Mres:Mres,fases:fases,
+    Md:MdArr,exMd:exMd,Vd:VdArr,MRd:MRdArr,flex:fl,AsNec:AsNec,AsMin:AsMin,AsAdot:AsAdot,
+    AsMinTx:AsMinTx,MdMin:MdMin,rhoMin:rhoMin,dp:dp,ds:ds,epre:epre,
+    cis:{VRd2:VRd2,VRd3:VRd3,Vc0:Vc0,Vc:Vc,M0:M0,AswS:AswS,AswMin:AswMin,AswAdot:AswAdot,
+         s:sEst,smax:smax,VdAp:VdAp,alfaV2:alfaV2,fywd:fywd,d:dCis,Aest:Aest},
+    els:{combELS:combELS,ver:verELS,wk:wk,Mr:Mr,M0:M0,MfreqMax:MfreqMax,fissurada:fissurada,sigmaS:sigmaSFis},
+    fl:{dG:dG,dQ:dQ,dP:dP,dQP:dQP,dImed:dImed,dInf:dInf,lim:limFl,exImed:exImed,exInf:exInf,exP:exP},
+    tempo:{t:tempos,P:serieP,f:serieF},
+    uso:{flex:uFlex,cis:uCis,cisArm:uCisArm,tens:uTens,transf:uTransf,flecha:uFlecha,prot:uProt},
+    eq:{carga:cargaTotal,reacao:reacao,erro:erroEq},
+    tracaoTransf:tracaoTransf,fyd:fyd,Es:Es,modelo:m};
+}
+
+return {rodar:rodar,propSecao:propSecao,propConcreto:propConcreto,esforcos:esforcos,
+        flecha:flecha,cabo:cabo,flexao:flexao,larguraEm:larguraEm,longaDuracao:longaDuracao};
+})();
+
+/* ============================================================
+   ESTADO E LEITURA DO MODELO
+   ============================================================ */
+const state={pontos:[],momentos:[],dist:[],polig:[{x:0,e:10},{x:6,e:28},{x:12,e:10}],pers:[],
+             arrastar:false,cursor:null,R:null};
+function fatorSec(){return sval('uSec')==='mm'?0.001:0.01;}
+function fatorComp(){return sval('uComp')==='cm'?0.01:1;}
+
+function lerModelo(){
+  const fs=fatorSec(),fl=fatorComp();
+  const geo={tipo:sval('tipoSec'),L:val('L')*fl,h:val('h')*fs,bw:val('bw')*fs,bf:val('bf')*fs,
+    hf:val('hf')*fs,bfi:val('bfi')*fs,hfi:val('hfi')*fs,cob:val('cob')*fs,dl:val('dLinha')*fs,
+    pers:state.pers.map(p=>({b:p.b*fs,h:p.h*fs,ytop:p.y*fs}))};
+  const conc={fck:val('fck'),alfaE:num(sval('agreg')),sCim:num(sval('cimento')),t0:val('t0'),
+    gc:val('gamaC'),peso:val('pesoEsp'),nu:val('poisson'),caa:parseInt(sval('caa'),10)};
+  const aco={tipo:sval('tipoAco'),Es:val('Es')*1000,gs:val('gamaS'),
+    phiLong:val('phiLong'),phiEst:val('phiEst'),ramos:val('ramos')};
+  const prot={sistema:sval('sistema'),classe:sval('classeP'),fptk:val('fptk'),fpyk:val('fpyk'),
+    Ep:val('Ep')*1000,n:val('nCord'),Ap1:val('Ap1')/1e4,sigmaPi:val('sigmaPi'),
+    mu:val('mu'),k:val('kOnd'),slip:val('slip'),lados:sval('ladosProt'),nCabos:val('nCabos')};
+  const cb={perfil:sval('perfil'),eApoio:val('eApoio')*fs,eMeio:val('eMeio')*fs,
+    pontos:state.polig.map(p=>({x:p.x,e:p.e*fs}))};
+  const cargas={ppAuto:chk('ppAuto'),gpp:val('gpp'),g2:val('g2'),q:val('q1'),
+    pontos:state.pontos.slice(),momentos:state.momentos.slice(),dist:state.dist.slice()};
+  const comb={gg:val('gG'),gq:val('gQ'),ggfav:val('gGfav'),psi0:val('psi0'),psi1:val('psi1'),psi2:val('psi2')};
+  const ld={U:val('umid'),tInf:val('tInf'),auto:sval('autoLd')==='1',fi:val('fluencia'),ecs:val('retracao')};
+  return {geo:geo,conc:conc,aco:aco,prot:prot,cabo:cb,cargas:cargas,comb:comb,ld:ld,npts:parseInt(sval('npts'),10)||201};
+}
+
+/* ============================================================
+   GRÁFICOS SVG
+   ============================================================ */
+const CHARTS={};
+const CORES={azul:'#164b77',roxo:'#7a2f8f',verde:'#137a4d',vermelho:'#b3261e',cinza:'#5b7c99',laranja:'#b26a00'};
+const NS='http://www.w3.org/2000/svg';
+function el(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+
+function grafico(id,cfg){
+  const box=$('#'+id);if(!box)return;
+  box.innerHTML='';box.classList.add('graf');
+  const W=760,H=cfg.altura||250,ml=58,mr=16,mt=14,mb=30;
+  const svg=el('svg',{viewBox:'0 0 '+W+' '+H,preserveAspectRatio:'xMidYMid meet',role:'img'});
+  const cat=cfg.cat||null;
+  let xmin,xmax;
+  if(cat){xmin=0;xmax=cat.length-1;}
+  else{xmin=cfg.xmin!==undefined?cfg.xmin:Math.min.apply(null,cfg.series.map(s=>s.x[0]));
+       xmax=cfg.xmax!==undefined?cfg.xmax:Math.max.apply(null,cfg.series.map(s=>s.x[s.x.length-1]));}
+  let ymin=Infinity,ymax=-Infinity;
+  cfg.series.forEach(s=>s.y.forEach(v=>{if(isFinite(v)){if(v<ymin)ymin=v;if(v>ymax)ymax=v;}}));
+  if(!isFinite(ymin)){ymin=0;ymax=1;}
+  if(cfg.zero!==false){ymin=Math.min(ymin,0);ymax=Math.max(ymax,0);}
+  if(ymax-ymin<1e-9){ymax+=1;ymin-=1;}
+  const pad=(ymax-ymin)*0.1;ymin-=pad;ymax+=pad;
+  const inv=cfg.inverter;
+  const X=v=>ml+(v-xmin)/(xmax-xmin||1)*(W-ml-mr);
+  const Y=v=>{const t=(v-ymin)/(ymax-ymin);return inv?mt+t*(H-mt-mb):H-mb-t*(H-mt-mb);};
+  // grade
+  const nY=5;
+  for(let i=0;i<=nY;i++){const v=ymin+(ymax-ymin)*i/nY,y=Y(v);
+    svg.appendChild(el('line',{x1:ml,x2:W-mr,y1:y,y2:y,stroke:'#e8edf2','stroke-width':1}));
+    const t=el('text',{x:ml-6,y:y+4,'text-anchor':'end','font-size':10,fill:'#5a6b78'});
+    t.textContent=fmt(v,Math.abs(ymax-ymin)<2?3:(Math.abs(ymax-ymin)<20?1:0));svg.appendChild(t);}
+  const nX=cat?cat.length:6;
+  for(let i=0;i<nX;i++){
+    const v=cat?i:xmin+(xmax-xmin)*i/(nX-1),x=X(v);
+    svg.appendChild(el('line',{x1:x,x2:x,y1:mt,y2:H-mb,stroke:'#f1f5f8','stroke-width':1}));
+    const t=el('text',{x:x,y:H-mb+15,'text-anchor':'middle','font-size':10,fill:'#5a6b78'});
+    t.textContent=cat?cat[i]:fmt(v,xmax>20?0:1);svg.appendChild(t);}
+  if(ymin<0&&ymax>0)svg.appendChild(el('line',{x1:ml,x2:W-mr,y1:Y(0),y2:Y(0),stroke:'#94a6b5','stroke-width':1.2}));
+  svg.appendChild(el('line',{x1:ml,x2:ml,y1:mt,y2:H-mb,stroke:'#94a6b5','stroke-width':1.2}));
+  // séries
+  cfg.series.forEach(s=>{
+    const pts=[];for(let i=0;i<s.y.length;i++){if(!isFinite(s.y[i]))continue;
+      pts.push(X(cat?i:s.x[i])+','+Y(s.y[i]));}
+    if(!pts.length)return;
+    if(s.area){const d='M'+X(cat?0:s.x[0])+','+Y(0)+' L'+pts.join(' L')+' L'+X(cat?s.y.length-1:s.x[s.x.length-1])+','+Y(0)+' Z';
+      svg.appendChild(el('path',{d:d,fill:s.cor,opacity:0.12}));}
+    svg.appendChild(el('polyline',{points:pts.join(' '),fill:'none',stroke:s.cor||CORES.azul,
+      'stroke-width':s.w||2,'stroke-dasharray':s.dash||'','stroke-linejoin':'round'}));
+    if(s.marcas)for(let i=0;i<s.y.length;i++)svg.appendChild(el('circle',{cx:X(cat?i:s.x[i]),cy:Y(s.y[i]),r:3,fill:s.cor}));
+  });
+  // rótulos de extremos
+  (cfg.notas||[]).forEach(nt=>{
+    const x=X(cat?nt.i:nt.x),y=Y(nt.y);
+    svg.appendChild(el('circle',{cx:x,cy:y,r:3.5,fill:nt.cor||CORES.vermelho}));
+    const t=el('text',{x:Math.min(Math.max(x,ml+30),W-mr-40),y:y+(nt.acima?-9:16),'text-anchor':'middle','font-size':10.5,
+      fill:nt.cor||CORES.vermelho,'font-weight':600});t.textContent=nt.txt;svg.appendChild(t);});
+  if(cfg.yl){const t=el('text',{x:12,y:mt+8,'font-size':10.5,fill:'#5a6b78'});t.textContent=cfg.yl;svg.appendChild(t);}
+  if(cfg.xl){const t=el('text',{x:W-mr,y:H-4,'text-anchor':'end','font-size':10.5,fill:'#5a6b78'});t.textContent=cfg.xl;svg.appendChild(t);}
+  // cursor
+  const cur=el('line',{x1:0,x2:0,y1:mt,y2:H-mb,stroke:CORES.azul,'stroke-width':1,'stroke-dasharray':'4 3',opacity:0});
+  svg.appendChild(cur);
+  box.appendChild(svg);
+  const dica=document.createElement('div');dica.className='dica';box.appendChild(dica);
+  CHARTS[id]={svg:svg,cur:cur,X:X,cfg:cfg,box:box,W:W,H:H,cat:cat,xmin:xmin,xmax:xmax};
+  if(!cat&&cfg.sinc!==false){
+    const mover=ev=>{const r=svg.getBoundingClientRect();
+      const px=((ev.touches?ev.touches[0].clientX:ev.clientX)-r.left)/r.width*W;
+      const vx=xmin+(px-ml)/(W-ml-mr)*(xmax-xmin);
+      setCursor(Math.max(xmin,Math.min(xmax,vx)));};
+    svg.addEventListener('mousemove',mover);
+    svg.addEventListener('touchmove',ev=>{mover(ev);},{passive:true});
+    svg.addEventListener('mouseleave',()=>setCursor(null));
+  }
+  atualizaCursor(id);
+}
+function setCursor(v){state.cursor=v;Object.keys(CHARTS).forEach(atualizaCursor);lerCursor();}
+function atualizaCursor(id){
+  const c=CHARTS[id];if(!c||c.cat)return;
+  if(state.cursor===null){c.cur.setAttribute('opacity',0);c.box.querySelector('.dica').style.opacity=0;return;}
+  const x=c.X(state.cursor);c.cur.setAttribute('x1',x);c.cur.setAttribute('x2',x);c.cur.setAttribute('opacity',.8);
+  const d=c.box.querySelector('.dica');
+  const linhas=c.cfg.series.filter(s=>s.nome).map(s=>s.nome+': '+fmt(interp(state.cursor,s.x,s.y),s.dec===undefined?2:s.dec)+(s.un||''));
+  d.textContent='x = '+fmt(state.cursor,2)+' m\n'+linhas.join('\n');
+  d.style.left=(x/c.W*100)+'%';d.style.top=(c.H*0.28/c.H*100)+'%';d.style.opacity=1;
+}
+function lerCursor(){
+  const R=state.R,e=$('#leituraCursor');if(!R||!e)return;
+  if(state.cursor===null){e.textContent='Passe o mouse ou toque em qualquer gráfico.';return;}
+  const x=state.cursor,i=Math.round(x/R.L*(R.n-1));
+  e.innerHTML='x = <b>'+fmt(x,2)+' m</b> · M = <b>'+fmt(R.Mg[i]+R.Mq[i])+' kN·m</b> · V = <b>'+fmt(R.Vg[i]+R.Vq[i])+
+    ' kN</b> · δ = <b>'+fmt(R.fl.dImed[i]*1000)+' mm</b> · P = <b>'+fmt(R.Pinf[i])+' kN</b> · e = <b>'+fmt(R.cabo.e[i]*100)+' cm</b>';
+}
+function exportarPNG(id){
+  const c=CHARTS[id]||{svg:$('#'+id+' svg')};
+  const svg=c.svg||$('#'+id+' svg');if(!svg)return;
+  const s=new XMLSerializer().serializeToString(svg);
+  const img=new Image();const esc2=encodeURIComponent(s.replace(/currentColor/g,'#164b77'));
+  img.onload=function(){const cv=document.createElement('canvas');cv.width=1520;cv.height=1520*img.height/img.width;
+    const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,cv.width,cv.height);
+    g.drawImage(img,0,0,cv.width,cv.height);
+    const a=document.createElement('a');a.download='apavan-'+id+'.png';a.href=cv.toDataURL('image/png');a.click();};
+  img.src='data:image/svg+xml;charset=utf-8,'+esc2;
+}
+
+/* ---------- Desenhos especiais ---------- */
+function desenhaSecao(id,R,det){
+  const box=$('#'+id);if(!box||!R)return;box.innerHTML='';box.classList.add('graf');
+  const sec=R.sec,m=R.modelo,W=420,H=330,mg=44;
+  const bmax=Math.max.apply(null,sec.partes.map(p=>p.b));
+  const k=Math.min((W-2*mg)/bmax,(H-2*mg)/sec.h);
+  const cx=W/2, y0=(H-sec.h*k)/2;
+  const svg=el('svg',{viewBox:'0 0 '+W+' '+H,preserveAspectRatio:'xMidYMid meet'});
+  sec.partes.forEach(p=>{svg.appendChild(el('rect',{x:cx-p.b*k/2,y:y0+p.y*k,width:p.b*k,height:p.h*k,
+    fill:'#dbe6f0',stroke:CORES.azul,'stroke-width':1.6}));});
+  const c=m.geo.cob*k;
+  svg.appendChild(el('rect',{x:cx-sec.bw*k/2+c,y:y0+c,width:sec.bw*k-2*c,height:sec.h*k-2*c,
+    fill:'none',stroke:CORES.vermelho,'stroke-width':1.1,'stroke-dasharray':'4 3',rx:5}));
+  // CG
+  const yCG=y0+sec.yt*k;
+  svg.appendChild(el('line',{x1:cx-bmax*k/2-14,x2:cx+bmax*k/2+14,y1:yCG,y2:yCG,stroke:CORES.verde,'stroke-width':1.2,'stroke-dasharray':'8 3 2 3'}));
+  let t=el('text',{x:cx+bmax*k/2+16,y:yCG+4,'font-size':10,fill:CORES.verde});t.textContent='CG';svg.appendChild(t);
+  // linha neutra ELU
+  if(det&&R.flex&&R.flex.x<sec.h){const yn=y0+R.flex.x*k;
+    svg.appendChild(el('line',{x1:cx-bmax*k/2,x2:cx+bmax*k/2,y1:yn,y2:yn,stroke:CORES.laranja,'stroke-width':1.2}));
+    t=el('text',{x:cx-bmax*k/2-4,y:yn+4,'text-anchor':'end','font-size':10,fill:CORES.laranja});
+    t.textContent='LN x='+fmt(R.flex.x*100,1)+'cm';svg.appendChild(t);}
+  // cordoalhas
+  const nC=m.prot.n, cam=Math.max(1,Math.round(val('camadas')||2)), porCam=Math.ceil(nC/cam);
+  const dpc=sec.yt+R.cabo.e[R.iMid];
+  for(let c1=0;c1<cam;c1++){
+    const nEsta=Math.min(porCam,nC-c1*porCam);if(nEsta<=0)break;
+    const yy=y0+(dpc+(c1-(cam-1)/2)*0.05)*k;
+    for(let j=0;j<nEsta;j++){const xx=cx+(j-(nEsta-1)/2)*Math.min((sec.bw*k-2*c)/Math.max(nEsta,1),16);
+      svg.appendChild(el('circle',{cx:xx,cy:yy,r:4,fill:CORES.roxo}));}}
+  // barras passivas
+  const nb=Math.max(0,Math.round(val('nBarras')||0)), nb2=Math.max(0,Math.round(val('nBarras2')||0));
+  const rb=Math.max(3,m.aco.phiLong/2*k/1000*4);
+  for(let j=0;j<nb;j++){const xx=cx+(j-(nb-1)/2)*Math.min((sec.bw*k-2*c)/Math.max(nb,1),18);
+    svg.appendChild(el('circle',{cx:xx,cy:y0+sec.h*k-c-rb,r:rb,fill:CORES.vermelho}));}
+  for(let j=0;j<nb2;j++){const xx=cx+(j-(nb2-1)/2)*Math.min((sec.bw*k-2*c)/Math.max(nb2,1),18);
+    svg.appendChild(el('circle',{cx:xx,cy:y0+c+rb,r:rb,fill:CORES.vermelho}));}
+  // cotas
+  t=el('text',{x:cx,y:y0+sec.h*k+20,'text-anchor':'middle','font-size':10.5,fill:'#5a6b78'});
+  t.textContent='b_w = '+fmt(sec.bw*100,1)+' cm';svg.appendChild(t);
+  t=el('text',{x:10,y:y0+sec.h*k/2,'font-size':10.5,fill:'#5a6b78'});
+  t.textContent='h = '+fmt(sec.h*100,1)+' cm';svg.appendChild(t);
+  box.appendChild(svg);
+}
+function desenhaCabo(R){
+  const box=$('#grafCabo');if(!box||!R)return;box.innerHTML='';box.classList.add('graf');
+  const W=760,H=200,ml=40,mr=20,mt=24,mb=32,sec=R.sec;
+  const k=(H-mt-mb)/sec.h, esc=(W-ml-mr)/R.L;
+  const svg=el('svg',{viewBox:'0 0 '+W+' '+H,preserveAspectRatio:'xMidYMid meet'});
+  svg.appendChild(el('rect',{x:ml,y:mt,width:W-ml-mr,height:sec.h*k,fill:'#eef3f8',stroke:CORES.azul,'stroke-width':1.5}));
+  const yCG=mt+sec.yt*k;
+  svg.appendChild(el('line',{x1:ml,x2:W-mr,y1:yCG,y2:yCG,stroke:CORES.verde,'stroke-width':1,'stroke-dasharray':'8 3 2 3'}));
+  const pts=[];for(let i=0;i<R.n;i++)pts.push((ml+R.xs[i]*esc)+','+(yCG+R.cabo.e[i]*k));
+  svg.appendChild(el('polyline',{points:pts.join(' '),fill:'none',stroke:CORES.roxo,'stroke-width':2.5}));
+  // apoios
+  [[ml,0],[W-mr,1]].forEach(a=>{const x=a[0],y=mt+sec.h*k;
+    svg.appendChild(el('polygon',{points:x+','+y+' '+(x-10)+','+(y+14)+' '+(x+10)+','+(y+14),fill:'#5b7c99'}));});
+  // pontos editáveis
+  const editaveis=[];
+  if(R.modelo.cabo.perfil==='polig')state.polig.forEach((p,i)=>editaveis.push({x:p.x,e:p.e*fatorSec(),i:i}));
+  else{editaveis.push({x:0,e:R.modelo.cabo.eApoio,i:'ap'});editaveis.push({x:R.L/2,e:R.modelo.cabo.eMeio,i:'me'});
+       editaveis.push({x:R.L,e:R.modelo.cabo.eApoio,i:'ap'});}
+  editaveis.forEach(p=>{const cxx=ml+Math.min(p.x,R.L)*esc,cyy=yCG+p.e*k;
+    const cc=el('circle',{cx:cxx,cy:cyy,r:6,fill:'#fff',stroke:CORES.roxo,'stroke-width':2,style:'cursor:ns-resize'});
+    cc.dataset.i=p.i;svg.appendChild(cc);
+    const tt=el('text',{x:cxx,y:cyy-11,'text-anchor':'middle','font-size':9.5,fill:CORES.roxo});
+    tt.textContent=fmt(p.e*100,1)+' cm';svg.appendChild(tt);
+    if(state.arrastar){
+      cc.addEventListener('pointerdown',ev=>{ev.preventDefault();
+        const r=svg.getBoundingClientRect();
+        const mv=e2=>{const py=((e2.clientY||0)-r.top)/r.height*H;
+          const ee=(py-yCG)/k;
+          const lim=sec.yb-R.modelo.geo.cob-0.03;
+          const v=Math.max(-(sec.yt-R.modelo.geo.cob-0.03),Math.min(lim,ee))/fatorSec();
+          if(p.i==='ap')setv('eApoio',v.toFixed(1));
+          else if(p.i==='me')setv('eMeio',v.toFixed(1));
+          else{state.polig[p.i].e=+v.toFixed(1);renderPolig();}
+          agendar();};
+        const up=()=>{window.removeEventListener('pointermove',mv);window.removeEventListener('pointerup',up);};
+        window.addEventListener('pointermove',mv);window.addEventListener('pointerup',up);});
+    }});
+  const t=el('text',{x:ml,y:14,'font-size':10.5,fill:'#5a6b78'});
+  t.textContent='Traçado do cabo — e positivo abaixo do CG'+(state.arrastar?' (arraste os pontos)':'');
+  svg.appendChild(t);
+  box.appendChild(svg);
+}
+function desenhaApoios(){
+  const box=$('#croquiApoios');if(!box)return;box.innerHTML='';box.classList.add('graf');
+  const W=520,H=110;const svg=el('svg',{viewBox:'0 0 '+W+' '+H});
+  svg.appendChild(el('rect',{x:50,y:40,width:W-100,height:26,fill:'#dbe6f0',stroke:CORES.azul,'stroke-width':1.5}));
+  svg.appendChild(el('polygon',{points:'50,66 38,86 62,86',fill:'#5b7c99'}));
+  svg.appendChild(el('polygon',{points:(W-50)+',66 '+(W-62)+',86 '+(W-38)+',86',fill:'#5b7c99'}));
+  svg.appendChild(el('circle',{cx:W-50,cy:90,r:4,fill:'none',stroke:'#5b7c99','stroke-width':1.5}));
+  const t=el('text',{x:W/2,y:26,'text-anchor':'middle','font-size':11,fill:'#5a6b78'});
+  t.textContent='Viga biapoiada — vão teórico L';svg.appendChild(t);
+  box.appendChild(svg);
+}
+function desenhaDominio(R){
+  const box=$('#gDom');if(!box||!R)return;box.innerHTML='';box.classList.add('graf');
+  const W=560,H=280,ml=150,mt=26,mb=30,sec=R.sec,f=R.flex;
+  const k=(H-mt-mb)/sec.h;
+  const svg=el('svg',{viewBox:'0 0 '+W+' '+H,preserveAspectRatio:'xMidYMid meet'});
+  const bmax=Math.max.apply(null,sec.partes.map(p=>p.b));
+  const cx=72,ks=Math.min(110/bmax,k);
+  sec.partes.forEach(p=>{svg.appendChild(el('rect',{x:cx-p.b*ks/2,y:mt+p.y*k,width:p.b*ks,height:p.h*k,
+    fill:'#e8eef4',stroke:CORES.azul,'stroke-width':1.2}));});
+  const escE=Math.max(Math.abs(f.epsTop),Math.abs(f.ep),0.001)*1.15;
+  const X0=ml+150, esc=150/escE;
+  svg.appendChild(el('line',{x1:X0,x2:X0,y1:mt,y2:mt+sec.h*k,stroke:'#94a6b5','stroke-width':1}));
+  const yN=mt+Math.min(f.x,sec.h)*k;
+  const xTop=X0-f.epsTop*esc, xBot=X0+(f.epsTop*(sec.h-f.x)/f.x)*esc;
+  svg.appendChild(el('polyline',{points:xTop+','+mt+' '+X0+','+yN+' '+xBot+','+(mt+sec.h*k),
+    fill:'none',stroke:CORES.vermelho,'stroke-width':2}));
+  svg.appendChild(el('line',{x1:cx-bmax*ks/2-8,x2:X0+160,y1:yN,y2:yN,stroke:CORES.laranja,'stroke-width':1.2,'stroke-dasharray':'5 3'}));
+  const rot=(x,y,txt,cor)=>{const t=el('text',{x:x,y:y,'font-size':10.5,fill:cor||'#5a6b78'});t.textContent=txt;svg.appendChild(t);};
+  rot(xTop-4,mt-6,'εc = '+fmt(f.epsTop*1000,3)+'‰',CORES.vermelho);
+  rot(X0+6,yN-6,'x = '+fmt(f.x*100,2)+' cm',CORES.laranja);
+  rot(X0+6,mt+R.dp*k+14,'εp,total = '+fmt(f.ep*1000,3)+'‰',CORES.roxo);
+  rot(ml-140,H-8,'Domínio '+f.dominio,CORES.azul);
+  box.appendChild(svg);
+}
+
+/* ============================================================
+   TABELAS
+   ============================================================ */
+function tabela(id,cab,linhas){
+  const t=$('#'+id);if(!t)return;
+  let h='';
+  if(cab)h+='<thead><tr>'+cab.map((c,i)=>'<th'+(i?' class="num"':'')+'>'+c+'</th>').join('')+'</tr></thead>';
+  h+='<tbody>'+linhas.map(r=>'<tr>'+r.map((c,i)=>'<td'+(i?' class="num"':'')+'>'+(c===null||c===undefined?'—':c)+'</td>').join('')+'</tr>').join('')+'</tbody>';
+  t.innerHTML=h;
+}
+const sitHTML=(s,txt)=>'<span class="sit '+s+'">'+(txt||{ok:'ATENDE',at:'VERIFICAR',no:'NÃO ATENDE',nd:'NÃO CALCULADO'}[s])+'</span>';
+
+/* ============================================================
+   RENDERIZAÇÃO
+   ============================================================ */
+function render(R){
+  const m=R.modelo,sec=R.sec,mc=R.mc,L=R.L,xs=R.xs,i0=R.iMid;
+  const cm=v=>fmt(v*100,2), cm2=v=>fmt(v*1e4,2);
+
+  /* --- avisos globais --- */
+  const caixa=$('#avisosCabo');
+  caixa.innerHTML=R.avisos.map(a=>'<div class="aviso-box '+(a.t==='erro'?'erro-box':'')+'">'+a.m+'</div>').join('');
+
+  /* --- geometria --- */
+  tabela('tabSec',['Propriedade','Valor','Unidade'],[
+    ['Área A<sub>c</sub>',cm2(sec.A),'cm²'],
+    ['Inércia I<sub>c</sub>',fmt(sec.I*1e8,0),'cm⁴'],
+    ['y<sub>t</sub> (topo ao CG)',cm(sec.yt),'cm'],
+    ['y<sub>b</sub> (base ao CG)',cm(sec.yb),'cm'],
+    ['W<sub>t</sub>',fmt(sec.Wt*1e6,0),'cm³'],
+    ['W<sub>b</sub>',fmt(sec.Wb*1e6,0),'cm³'],
+    ['Raio de giração i',cm(sec.i),'cm'],
+    ['Perímetro exposto u',cm(sec.u),'cm'],
+    ['Peso próprio g<sub>pp</sub>',fmt(R.gpp,2),'kN/m']]);
+  $('#memSec').innerHTML='<b>Seção composta por retângulos</b>\nA = Σ b·h = '+cm2(sec.A)+' cm²\n'+
+    'y<sub>t</sub> = Σ(A<sub>i</sub>·y<sub>i</sub>)/A = '+cm(sec.yt)+' cm\n'+
+    'I = Σ[b·h³/12 + A<sub>i</sub>·(y<sub>i</sub> − y<sub>t</sub>)²] = '+fmt(sec.I*1e8,0)+' cm⁴\n'+
+    'W<sub>t</sub> = I/y<sub>t</sub> = '+fmt(sec.Wt*1e6,0)+' cm³   ·   W<sub>b</sub> = I/y<sub>b</sub> = '+fmt(sec.Wb*1e6,0)+' cm³\n<hr>'+
+    '<b>Peso próprio</b>\ng<sub>pp</sub> = γ<sub>c</sub> × A = '+fmt(m.conc.peso,1)+' × '+fmt(sec.A,4)+' = '+fmt(R.gpp,2)+' kN/m';
+  desenhaSecao('desSecao',R,false);
+  desenhaSecao('desDet',R,true);
+
+  /* --- concreto --- */
+  tabela('tabConc',['Propriedade','Valor','Unidade'],[
+    ['f<sub>ck</sub>',fmt(mc.fck,1),'MPa'],['f<sub>cd</sub>',fmt(mc.fcd,2),'MPa'],
+    ['σ<sub>cd</sub> = α<sub>c</sub>·f<sub>cd</sub>',fmt(mc.sigmaCd,2),'MPa'],
+    ['f<sub>ct,m</sub>',fmt(mc.fctm,2),'MPa'],['f<sub>ctk,inf</sub>',fmt(mc.fctkinf,2),'MPa'],
+    ['f<sub>ctk,sup</sub>',fmt(mc.fctksup,2),'MPa'],
+    ['E<sub>ci</sub>',fmt(mc.Eci/1000,1),'GPa'],['E<sub>cs</sub>',fmt(mc.Ecs/1000,1),'GPa'],
+    ['f<sub>ckj</sub> (t₀ = '+fmt(m.conc.t0,0)+' d)',fmt(mc.fckj,2),'MPa'],
+    ['E<sub>ci</sub>(t₀)',fmt(mc.Ecij/1000,1),'GPa'],
+    ['ε<sub>c2</sub> / ε<sub>cu</sub>',fmt(mc.ec2,2)+' / '+fmt(mc.ecu,2),'‰']]);
+  $('#memConc').innerHTML=
+    'f<sub>ct,m</sub> = '+(mc.fck<=50?'0,3·f<sub>ck</sub><sup>2/3</sup>':'2,12·ln(1+0,11 f<sub>ck</sub>)')+' = '+fmt(mc.fctm,3)+' MPa\n'+
+    'E<sub>ci</sub> = α<sub>E</sub>·5600·√f<sub>ck</sub> = '+fmt(m.conc.alfaE,1)+'·5600·√'+fmt(mc.fck,0)+' = '+fmt(mc.Eci,0)+' MPa\n'+
+    'α<sub>i</sub> = 0,8 + 0,2·f<sub>ck</sub>/80 = '+fmt(mc.alfai,3)+'  →  E<sub>cs</sub> = '+fmt(mc.Ecs,0)+' MPa\n'+
+    'β<sub>cc</sub>(t₀) = exp{s·[1 − (28/t₀)<sup>0,5</sup>]} = '+fmt(mc.betacc,3)+'  →  f<sub>ckj</sub> = '+fmt(mc.fckj,2)+' MPa\n'+
+    'σ<sub>cd</sub> = α<sub>c</sub>·f<sub>ck</sub>/γ<sub>c</sub> = '+fmt(mc.alfac,3)+'·'+fmt(mc.fck,0)+'/'+fmt(m.conc.gc,2)+' = '+fmt(mc.sigmaCd,2)+' MPa';
+  tabela('tabAcoP',['Propriedade','Valor','Unidade'],[
+    ['Número de cordoalhas',fmt(m.prot.n,0),'un'],
+    ['Área unitária A<sub>p1</sub>',fmt(m.prot.Ap1*1e4,3),'cm²'],
+    ['Área total A<sub>p</sub>',cm2(R.Ap),'cm²'],
+    ['f<sub>ptk</sub> / f<sub>pyk</sub>',fmt(R.ap.fptk,0)+' / '+fmt(R.ap.fpyk,0),'MPa'],
+    ['f<sub>pyd</sub>',fmt(R.ap.fpyd,1),'MPa'],['E<sub>p</sub>',fmt(R.ap.Ep/1000,0),'GPa'],
+    ['Relaxação',R.rel,'—']]);
+
+  /* --- protensão --- */
+  const sPi=m.prot.sigmaPi;
+  tabela('tabLimProt',['Grandeza','Valor','Limite','Situação'],[
+    ['σ<sub>pi</sub> (MPa)',fmt(sPi,1),fmt(R.sigmaLim,1),sitHTML(sPi<=R.sigmaLim?'ok':'no')],
+    ['P₀ = σ<sub>pi</sub>·A<sub>p</sub> (kN)',fmt(R.P0,2),'—',''],
+    ['P após perdas imediatas (kN)',fmt(R.Pimd0,2),'—',''],
+    ['P<sub>∞</sub> — força efetiva (kN)',fmt(R.Pinf0,2),'—',''],
+    ['Perda total (%)',fmt((1-R.Pinf0/R.P0)*100,2),'—','']]);
+  const relTxt=R.rel==='RB'?'relaxação baixa (RB)':'relaxação normal (RN)';
+  $('#memLimProt').innerHTML='<b>NBR 6118 — 9.6.1.2.1</b> ('+(m.prot.sistema==='pre'?'pré-tração':'pós-tração')+', '+relTxt+')\n'+
+    'σ<sub>pi</sub> ≤ min('+(m.prot.sistema==='pre'?'0,77':'0,74')+'·f<sub>ptk</sub> ; '+
+    (m.prot.sistema==='pre'?(R.rel==='RB'?'0,85':'0,90'):(R.rel==='RB'?'0,82':'0,87'))+'·f<sub>pyk</sub>)\n'+
+    'σ<sub>pi</sub> ≤ min('+fmt((m.prot.sistema==='pre'?0.77:0.74)*R.ap.fptk,1)+' ; '+
+    fmt(R.sigmaLim===Math.min((m.prot.sistema==='pre'?0.77:0.74)*R.ap.fptk,R.sigmaLim)?R.sigmaLim:R.sigmaLim,1)+') = '+fmt(R.sigmaLim,1)+' MPa\n<hr>'+
+    'P₀ = σ<sub>pi</sub> · A<sub>p</sub> = '+fmt(sPi,1)+' × '+fmt(R.Ap*1e4,2)+' cm² = '+fmt(R.P0,2)+' kN';
+  desenhaCabo(R);
+
+  /* --- combinações --- */
+  const Mk=xs.map((x,i)=>R.Mg[i]+R.Mq[i]);
+  tabela('tabComb',['Combinação','Expressão','M no meio do vão (kN·m)'],[
+    ['ELU normal','γ<sub>g</sub>·M<sub>g</sub> + γ<sub>q</sub>·M<sub>q</sub> = '+fmt(m.comb.gg,2)+'·M<sub>g</sub> + '+fmt(m.comb.gq,2)+'·M<sub>q</sub>',fmt(R.Md[i0])],
+    ['ELS rara','M<sub>g</sub> + M<sub>q</sub>',fmt(R.Mg[i0]+R.Mq[i0])],
+    ['ELS frequente','M<sub>g</sub> + ψ₁·M<sub>q</sub> ('+fmt(m.comb.psi1,1)+')',fmt(R.Mg[i0]+m.comb.psi1*R.Mq[i0])],
+    ['ELS quase permanente','M<sub>g</sub> + ψ₂·M<sub>q</sub> ('+fmt(m.comb.psi2,1)+')',fmt(R.Mg[i0]+m.comb.psi2*R.Mq[i0])]]);
+  $('#memComb').innerHTML='<b>ELU — combinação última normal (NBR 8681 / NBR 6118 11.8.2)</b>\n'+
+    'F<sub>d</sub> = γ<sub>g</sub>·F<sub>gk</sub> + γ<sub>q</sub>·(F<sub>q1k</sub> + Σψ<sub>0j</sub>·F<sub>qjk</sub>)\n'+
+    'Coeficientes adotados: γ<sub>g</sub> = '+fmt(m.comb.gg,2)+' · γ<sub>q</sub> = '+fmt(m.comb.gq,2)+
+    ' · ψ₀ = '+fmt(m.comb.psi0,1)+' · ψ₁ = '+fmt(m.comb.psi1,1)+' · ψ₂ = '+fmt(m.comb.psi2,1)+'\n<hr>'+
+    '<b>ELS</b>\nRara: F<sub>d,ser</sub> = ΣF<sub>gik</sub> + F<sub>q1k</sub> + Σψ<sub>1j</sub>F<sub>qjk</sub>\n'+
+    'Frequente: ΣF<sub>gik</sub> + ψ₁F<sub>q1k</sub> + Σψ<sub>2j</sub>F<sub>qjk</sub>\n'+
+    'Quase permanente: ΣF<sub>gik</sub> + Σψ<sub>2j</sub>F<sub>qjk</sub>\n'+
+    'Combinações especiais e excepcionais: <b>NÃO IMPLEMENTADO — verificar manualmente.</b>';
+
+  /* --- esforços --- */
+  const exM=extremos(xs,Mk), exV=extremos(xs,xs.map((x,i)=>R.Vg[i]+R.Vq[i]));
+  tabela('tabEsf',['Grandeza','Valor','Posição x','Observação'],[
+    ['Reação esquerda R<sub>a</sub>',fmt(R.E1.Ra+R.E2.Ra+R.EQ.Ra)+' kN','0,00 m','característica (g + q)'],
+    ['Reação direita R<sub>b</sub>',fmt(R.E1.Rb+R.E2.Rb+R.EQ.Rb)+' kN',fmt(L)+' m','característica (g + q)'],
+    ['M máximo característico',fmt(exM.max)+' kN·m',fmt(exM.xMax)+' m','g + q'],
+    ['M<sub>Sd</sub> máximo',fmt(R.exMd.max)+' kN·m',fmt(R.exMd.xMax)+' m','ELU'],
+    ['V máximo característico',fmt(exV.absMax)+' kN','apoios','g + q'],
+    ['V<sub>Sd</sub> no apoio',fmt(R.cis.VdAp)+' kN','apoios','ELU'],
+    ['Esforço normal N',fmt(-R.Pinf0)+' kN','—','protensão (compressão)'],
+    ['Verificação ΣF',fmt(R.eq.carga-R.eq.reacao,5)+' kN','—',sitHTML(R.eq.erro<1e-3?'ok':'no',R.eq.erro<1e-3?'EQUILÍBRIO OK':'ERRO DE EQUILÍBRIO')]]);
+  $('#memEsf').innerHTML='<b>Discretização</b>: '+R.n+' pontos ao longo de L = '+fmt(L)+' m (Δx = '+fmt(L/(R.n-1),4)+' m)\n'+
+    'R<sub>a</sub> obtida por ΣM<sub>B</sub> = 0; V(x) = R<sub>a</sub> − ∫w dξ − ΣP<sub>j</sub>; M(x) = R<sub>a</sub>x − ∫∫w − ΣP<sub>j</sub>(x−x<sub>j</sub>) − ΣM<sub>j</sub>\n'+
+    'Flecha: EI·v″ = −M(x), integrada numericamente com v(0) = v(L) = 0\n<hr>'+
+    'ΣF<sub>vert</sub>: carga total = '+fmt(R.eq.carga,4)+' kN · reações = '+fmt(R.eq.reacao,4)+' kN · erro relativo = '+fmt(R.eq.erro*100,6)+'%';
+
+  grafico('gMom',{yl:'M (kN·m)',xl:'x (m)',inverter:true,series:[
+    {nome:'M g',x:xs,y:R.Mg,cor:CORES.cinza,w:1.5,un:' kN·m'},
+    {nome:'M g+q',x:xs,y:Mk,cor:CORES.azul,area:true,un:' kN·m'},
+    {nome:'M Sd',x:xs,y:R.Md,cor:CORES.vermelho,dash:'6 3',un:' kN·m'}],
+    notas:[{x:exM.xMax,y:exM.max,txt:'M máx = '+fmt(exM.max)+' kN·m'}]});
+  grafico('gCort',{yl:'V (kN)',xl:'x (m)',series:[
+    {nome:'V g+q',x:xs,y:xs.map((x,i)=>R.Vg[i]+R.Vq[i]),cor:CORES.azul,area:true,un:' kN'},
+    {nome:'V Sd',x:xs,y:R.Vd,cor:CORES.vermelho,dash:'6 3',un:' kN'}],
+    notas:[{x:0,y:R.Vd[0],txt:'V Sd = '+fmt(R.Vd[0])+' kN',acima:true}]});
+  grafico('gFlecha',{yl:'δ (mm)',xl:'x (m)',inverter:true,series:[
+    {nome:'δ imediata',x:xs,y:R.fl.dImed.map(v=>v*1000),cor:CORES.azul,un:' mm'},
+    {nome:'δ protensão',x:xs,y:R.fl.dP.map(v=>v*1000),cor:CORES.roxo,un:' mm'},
+    {nome:'δ total (t∞)',x:xs,y:R.fl.dInf.map(v=>v*1000),cor:CORES.verde,dash:'5 3',un:' mm'}],
+    notas:[{x:R.fl.exInf.xMax,y:R.fl.exInf.max*1000,txt:'δ = '+fmt(R.fl.exInf.max*1000)+' mm'}]});
+
+  /* --- perdas --- */
+  const p=R.perdas, pc=v=>fmt(v/R.P0*100,2)+'%';
+  tabela('tabPerdas',['Etapa','Perda (kN)','%','Força após (kN)','Tensão (MPa)'],[
+    ['P₀ — na saída do macaco','—','—',fmt(R.P0),fmt(m.prot.sigmaPi,1)],
+    ['Atrito (μ = '+fmt(m.prot.mu,2)+' ; k = '+fmt(m.prot.k,4)+')',fmt(p.fric),pc(p.fric),fmt(R.Pfric[i0]),fmt(R.Pfric[i0]/R.Ap/MPa,1)],
+    ['Acomodação da ancoragem (δ = '+fmt(m.prot.slip,1)+' mm)',fmt(p.anc),pc(p.anc),fmt(R.Panc[i0]),fmt(R.Panc[i0]/R.Ap/MPa,1)],
+    ['Encurtamento elástico do concreto',fmt(p.el),pc(p.el),fmt(R.Pimd0),fmt(R.Pimd0/R.Ap/MPa,1)],
+    ['Retração do concreto',fmt(p.ret),pc(p.ret),'—','—'],
+    ['Fluência do concreto',fmt(p.flu),pc(p.flu),'—','—'],
+    ['Relaxação da armadura',fmt(p.rel),pc(p.rel),'—','—'],
+    ['<b>Perdas progressivas (total)</b>',fmt(p.prog),pc(p.prog),fmt(R.Pinf0),fmt(R.Pinf0/R.Ap/MPa,1)],
+    ['<b>P<sub>∞</sub> — força efetiva</b>','—',fmt((1-R.Pinf0/R.P0)*100,2)+'%','<b>'+fmt(R.Pinf0)+'</b>','<b>'+fmt(R.Pinf0/R.Ap/MPa,1)+'</b>']]);
+  $('#memPerdas').innerHTML=
+    '<b>1. Atrito (pós-tração)</b>\nP(x) = P₀·e<sup>−(μ·Σα + k·x)</sup>  com k = '+fmt(m.prot.k,4)+' 1/m\n'+
+    'Σα(L/2) = '+fmt(R.cabo.ang[i0],5)+' rad  →  P = '+fmt(R.Pfric[i0],2)+' kN\n<hr>'+
+    '<b>2. Acomodação da ancoragem</b>\nl<sub>p</sub> = √(δ·E<sub>p</sub>·A<sub>p</sub>/ω) = '+fmt(p.lp,3)+' m · ΔP = 2·ω·(l<sub>p</sub>−x)\n'+
+    (p.lp>0?'':'Sistema pré-tracionado: não se aplica.')+'\n<hr>'+
+    '<b>3. Encurtamento elástico</b>\nα<sub>p</sub> = E<sub>p</sub>/E<sub>ci</sub>(t₀) = '+fmt(R.ap.Ep/mc.Ecij,3)+'\n'+
+    'σ<sub>c,p0</sub> = −P/A − P·e²/I + M<sub>g</sub>·e/I = '+fmt(p.sigCp0/MPa,3)+' MPa\n'+
+    'Δσ<sub>p</sub> = '+(m.prot.sistema==='pre'?'α<sub>p</sub>·|σ<sub>c,p0</sub>|':'α<sub>p</sub>·|σ<sub>c,p0</sub>|·(n−1)/(2n)')+' = '+fmt(p.dSigEl,2)+' MPa  →  ΔP = '+fmt(p.el,2)+' kN\n<hr>'+
+    '<b>4. Perdas progressivas — processo simplificado (NBR 6118 9.6.3.4.2)</b>\n'+
+    'h<sub>fic</sub> = γ·2A<sub>c</sub>/u<sub>ar</sub> = '+fmt(p.hfic,1)+' cm · U = '+fmt(m.ld.U,0)+'%\n'+
+    'φ(t<sub>∞</sub>,t₀) = '+fmt(p.fi,2)+'   ε<sub>cs</sub>(t<sub>∞</sub>,t₀) = '+fmt(p.ecs*1000,3)+'‰'+(m.ld.auto?'  (estimados da Tabela 8.2)':'  (informados)')+'\n'+
+    'ψ(t) = '+fmt(p.psi*100,3)+'%   χ = −ln(1−ψ) = '+fmt(p.chi,5)+'\n'+
+    'α<sub>p</sub> = E<sub>p</sub>/E<sub>cs</sub> = '+fmt(p.alfaP,3)+'  η<sub>p</sub> = 1 + e²·A/I = '+fmt(p.etaP,3)+'  ρ<sub>p</sub> = A<sub>p</sub>/A<sub>c</sub> = '+fmt(p.rhoP*100,4)+'%\n'+
+    'Δσ<sub>p</sub> = [|ε<sub>cs</sub>|E<sub>p</sub> + α<sub>p</sub>|σ<sub>c,pg</sub>|φ + σ<sub>p0</sub>χ] / [(1+χ) + (1+0,5φ)·α<sub>p</sub>·η<sub>p</sub>·ρ<sub>p</sub>]\n'+
+    'Δσ<sub>p</sub> = ['+fmt(p.numRet,2)+' + '+fmt(p.numFlu,2)+' + '+fmt(p.numRel,2)+'] / '+fmt(p.den,4)+' = '+fmt(p.dSigProg,2)+' MPa\n'+
+    'ΔP<sub>prog</sub> = Δσ<sub>p</sub>·A<sub>p</sub> = '+fmt(p.prog,2)+' kN\n'+
+    '<i>A separação entre retração, fluência e relaxação na tabela é proporcional às parcelas do numerador (apresentação) — verificação simplificada.</i>';
+  const etapas=['P₀','Atrito','Ancoragem','Enc. elástico','Retração','Fluência','Relaxação','P∞'];
+  const seqP=[R.P0,R.P0-p.fric,R.P0-p.fric-p.anc,R.Pimd0,R.Pimd0-p.ret,R.Pimd0-p.ret-p.flu,R.Pinf0,R.Pinf0];
+  grafico('gPerdas',{cat:etapas,yl:'P (kN)',zero:false,series:[{nome:'P',x:seqP.map((v,i)=>i),y:seqP,cor:CORES.roxo,marcas:true,area:true}]});
+  grafico('gPx',{yl:'P (kN)',xl:'x (m)',zero:false,series:[
+    {nome:'P após atrito',x:xs,y:R.Pfric,cor:CORES.cinza,dash:'4 3',un:' kN'},
+    {nome:'P imediatas',x:xs,y:R.Pimd,cor:CORES.azul,un:' kN'},
+    {nome:'P∞',x:xs,y:R.Pinf,cor:CORES.roxo,w:2.5,un:' kN'}]});
+  grafico('gMp',{yl:'M (kN·m)',xl:'x (m)',inverter:true,series:[
+    {nome:'M externo',x:xs,y:Mk,cor:CORES.azul,un:' kN·m'},
+    {nome:'M protensão',x:xs,y:R.Mp,cor:CORES.roxo,un:' kN·m'},
+    {nome:'M resultante',x:xs,y:R.Mres,cor:CORES.verde,w:2.5,un:' kN·m'}]});
+  grafico('gPt',{cat:R.tempo.t.map(t=>t>=1000?fmt(t/365,0)+'a':fmt(t,0)+'d'),yl:'P (kN)',zero:false,
+    series:[{nome:'P(t)',x:R.tempo.t,y:R.tempo.P,cor:CORES.roxo,marcas:true}]});
+  grafico('gFt',{cat:R.tempo.t.map(t=>t>=1000?fmt(t/365,0)+'a':fmt(t,0)+'d'),yl:'δ (mm)',
+    series:[{nome:'δ(t)',x:R.tempo.t,y:R.tempo.f.map(v=>v*1000),cor:CORES.azul,marcas:true}]});
+
+  /* --- ELU flexão --- */
+  const f=R.flex;
+  tabela('tabFlex',['Grandeza','Valor','Unidade','Verificação'],[
+    ['M<sub>Sd</sub> máximo',fmt(R.exMd.max),'kN·m','x = '+fmt(R.exMd.xMax)+' m'],
+    ['M<sub>Rd</sub> da seção',fmt(f.MRd),'kN·m',sitHTML(f.MRd>=R.exMd.max?'ok':'no',f.MRd>=R.exMd.max?'M<sub>Sd</sub> ≤ M<sub>Rd</sub> — OK':'M<sub>Sd</sub> > M<sub>Rd</sub> — NÃO OK')],
+    ['Utilização',fmt(R.uso.flex*100),'%',''],
+    ['Linha neutra x',fmt(f.x*100),'cm','ξ = x/d = '+fmt(f.x/f.dref,3)],
+    ['Domínio de deformação',f.dominio,'—',''],
+    ['Braço de alavanca z',fmt((R.dp-f.yc)*100),'cm',''],
+    ['ε<sub>c</sub> (topo)',fmt(f.epsTop*1000,4),'‰',''],
+    ['ε<sub>p</sub> total',fmt(f.ep*1000,4),'‰','pré-alongamento: '+fmt(R.epre*1000,4)+'‰'],
+    ['ε<sub>s</sub> (passiva)',fmt(f.es*1000,4),'‰',''],
+    ['A<sub>p</sub>',fmt(R.Ap*1e4,2),'cm²',''],
+    ['A<sub>s</sub> necessária',fmt(R.AsNec*1e4,2),'cm²',R.AsNec>0?'armadura passiva complementar':'não necessária pelo ELU']]);
+  $('#memFlex').innerHTML=
+    '<b>Hipóteses</b>: seções planas; concreto com diagrama parábola-retângulo (σ<sub>cd</sub> = '+fmt(mc.sigmaCd,2)+' MPa, ε<sub>c2</sub> = '+fmt(mc.ec2,2)+'‰, ε<sub>cu</sub> = '+fmt(mc.ecu,2)+'‰) integrado numericamente na zona comprimida; aço passivo elastoplástico perfeito; aço ativo bilinear com endurecimento até ε<sub>uk</sub> = 35‰.\n<hr>'+
+    '<b>Pré-alongamento da armadura ativa</b>\nε<sub>pn</sub> = σ<sub>p∞</sub>/E<sub>p</sub> + (P<sub>∞</sub>/E<sub>cs</sub>)·(1/A + e²/I) = '+fmt(R.epre*1000,4)+'‰\n<hr>'+
+    '<b>Equilíbrio</b>  R<sub>cc</sub> + R<sub>s2</sub> = R<sub>p</sub> + R<sub>s</sub>\n'+
+    'R<sub>cc</sub> = '+fmt(f.Rcc,2)+' kN (y<sub>c</sub> = '+fmt(f.yc*100,2)+' cm do topo)\n'+
+    'R<sub>p</sub> = A<sub>p</sub>·σ<sub>p</sub>(ε<sub>p</sub>) = '+fmt(f.Rp,2)+' kN  ·  R<sub>s</sub> = '+fmt(f.Rs,2)+' kN\n'+
+    'x = '+fmt(f.x*100,3)+' cm  (x<sub>23</sub> = '+fmt(f.x23*100,2)+' cm ; x<sub>34</sub> = '+fmt(f.x34*100,2)+' cm)\n<hr>'+
+    '<b>Momento resistente</b>\nM<sub>Rd</sub> = R<sub>p</sub>(d<sub>p</sub>−y<sub>c</sub>) + R<sub>s</sub>(d<sub>s</sub>−y<sub>c</sub>) = '+fmt(f.MRd,2)+' kN·m\n'+
+    '<b>Verificação</b>: M<sub>Sd</sub> = '+fmt(R.exMd.max,2)+' ≤ M<sub>Rd</sub> = '+fmt(f.MRd,2)+' kN·m  →  <b>'+(f.MRd>=R.exMd.max?'OK':'NÃO OK')+'</b>'+
+    (f.aviso?'\n<b>'+f.aviso+'</b>':'');
+  desenhaDominio(R);
+  tabela('tabDom',['Deformação','Valor (‰)','Limite'],[
+    ['ε<sub>c</sub> — topo',fmt(f.epsTop*1000,4),fmt(mc.ecu,2)],
+    ['ε<sub>p</sub> — total',fmt(f.ep*1000,4),'35,00'],
+    ['Δε<sub>p</sub> — incremento',fmt(f.dep*1000,4),'—'],
+    ['ε<sub>s</sub> — passiva',fmt(f.es*1000,4),'10,00'],
+    ['x',fmt(f.x*100,3)+' cm','—'],['Domínio',f.dominio,'—']]);
+  grafico('gMrd',{yl:'M (kN·m)',xl:'x (m)',series:[
+    {nome:'M Sd',x:xs,y:R.Md,cor:CORES.azul,area:true,un:' kN·m'},
+    {nome:'M Rd',x:xs,y:R.MRd,cor:CORES.verde,w:2.5,un:' kN·m'}]});
+
+  /* --- ELU cisalhamento --- */
+  const c=R.cis;
+  tabela('tabCis',['Grandeza','Valor','Unidade','Verificação'],[
+    ['V<sub>Sd</sub> no apoio',fmt(c.VdAp),'kN',''],
+    ['V<sub>Rd2</sub> — biela comprimida',fmt(c.VRd2),'kN',sitHTML(c.VdAp<=c.VRd2?'ok':'no')],
+    ['V<sub>c0</sub>',fmt(c.Vc0),'kN',''],
+    ['V<sub>c</sub> = V<sub>c0</sub>(1+M₀/M<sub>Sd,máx</sub>) ≤ 2V<sub>c0</sub>',fmt(c.Vc),'kN','M₀ = '+fmt(c.M0)+' kN·m'],
+    ['V<sub>Rd3</sub> = V<sub>c</sub> + V<sub>sw</sub>',fmt(c.VRd3),'kN',sitHTML(c.VdAp<=c.VRd3?'ok':'no')],
+    ['A<sub>sw</sub>/s necessária',fmt(c.AswS*1e4,2),'cm²/m',''],
+    ['A<sub>sw</sub>/s mínima',fmt(c.AswMin*1e4,2),'cm²/m',''],
+    ['A<sub>sw</sub>/s adotada',fmt(c.AswAdot*1e4,2),'cm²/m',''],
+    ['Espaçamento s',fmt(c.s*100,1),'cm','s<sub>máx</sub> = '+fmt(c.smax*100,1)+' cm'],
+    ['Utilização V<sub>Sd</sub>/V<sub>Rd2</sub>',fmt(R.uso.cis*100),'%','']]);
+  $('#memCis').innerHTML='<b>Modelo I — NBR 6118 17.4.2.2</b> (θ = 45°, α = 90°)\n'+
+    'α<sub>v2</sub> = 1 − f<sub>ck</sub>/250 = '+fmt(c.alfaV2,4)+'\n'+
+    'V<sub>Rd2</sub> = 0,27·α<sub>v2</sub>·f<sub>cd</sub>·b<sub>w</sub>·d = 0,27·'+fmt(c.alfaV2,3)+'·'+fmt(mc.fcd,2)+'·'+fmt(sec.bw*100,1)+'·'+fmt(c.d*100,1)+' = '+fmt(c.VRd2,2)+' kN\n'+
+    'V<sub>c0</sub> = 0,6·f<sub>ctd</sub>·b<sub>w</sub>·d = 0,6·'+fmt(mc.fctd,3)+'·b<sub>w</sub>·d = '+fmt(c.Vc0,2)+' kN\n'+
+    'M₀ = P<sub>∞</sub>·(W<sub>b</sub>/A + e) = '+fmt(R.Pinf0,1)+'·('+fmt(sec.Wb/sec.A,4)+' + '+fmt(R.cabo.e[i0],4)+') = '+fmt(c.M0,2)+' kN·m\n'+
+    'V<sub>c</sub> = '+fmt(c.Vc,2)+' kN\n'+
+    'A<sub>sw</sub>/s = (V<sub>Sd</sub> − V<sub>c</sub>)/(0,9·d·f<sub>ywd</sub>) = '+fmt(c.AswS*1e4,3)+' cm²/m\n'+
+    'A<sub>sw,mín</sub>/s = 0,2·(f<sub>ct,m</sub>/f<sub>ywk</sub>)·b<sub>w</sub> = '+fmt(c.AswMin*1e4,3)+' cm²/m\n'+
+    'Estribo Ø'+fmt(m.aco.phiEst,1)+' mm, '+fmt(m.aco.ramos,0)+' ramos (A = '+fmt(c.Aest*1e4,3)+' cm²) → s = '+fmt(c.s*100,1)+' cm\n'+
+    '<i>Decalagem do diagrama de momentos, armadura de suspensão e verificação da zona de ancoragem: <b>NÃO IMPLEMENTADO — verificar manualmente</b>.</i>';
+  grafico('gVrd',{yl:'V (kN)',xl:'x (m)',series:[
+    {nome:'V Sd',x:xs,y:R.Vd.map(Math.abs),cor:CORES.azul,area:true,un:' kN'},
+    {nome:'V Rd2',x:xs,y:xs.map(()=>c.VRd2),cor:CORES.vermelho,dash:'6 3',un:' kN'},
+    {nome:'V Rd3',x:xs,y:xs.map(()=>c.VRd3),cor:CORES.verde,un:' kN'}]});
+
+  /* --- ELS --- */
+  const limComp=0.6*mc.fck, limCompQP=0.45*mc.fck, limTransf=0.7*mc.fckj, limTracT=1.2*mc.fctmj;
+  tabela('tabFases',['Fase','Instante','σ<sub>sup</sub> meio','σ<sub>inf</sub> meio','σ<sub>sup</sub> apoio','σ<sub>inf</sub> apoio','Situação'],
+    R.fases.map(fa=>{
+      const vals=[fa.supMid,fa.infMid,fa.supAp,fa.infAp];
+      const comp=Math.min.apply(null,vals), trac=Math.max.apply(null,vals);
+      const lc=fa.t==='t₀'?limTransf:limComp, lt=fa.t==='t₀'?limTracT:mc.fctkinf;
+      const s=(Math.abs(comp)<=lc&&trac<=lt)?'ok':((Math.abs(comp)<=lc*1.05&&trac<=mc.fctm)?'at':'no');
+      return [fa.id+'. '+fa.nome,fa.t,fmt(fa.supMid),fmt(fa.infMid),fmt(fa.supAp),fmt(fa.infAp),sitHTML(s)];}));
+  $('#memTens').innerHTML='<b>Convenção</b>: compressão negativa · tração positiva · e positivo abaixo do CG\n'+
+    'M<sub>total</sub>(x) = M<sub>ext</sub>(x) − P(x)·e(x)\n'+
+    'σ<sub>sup</sub> = −P/A − M<sub>total</sub>·y<sub>t</sub>/I    σ<sub>inf</sub> = −P/A + M<sub>total</sub>·y<sub>b</sub>/I\n<hr>'+
+    '<b>Limites adotados</b>\nNa transferência (t₀): |σ<sub>c</sub>| ≤ 0,7·f<sub>ckj</sub> = '+fmt(limTransf,2)+' MPa · σ<sub>t</sub> ≤ 1,2·f<sub>ct,m</sub>(t₀) = '+fmt(limTracT,2)+' MPa\n'+
+    'Em serviço: |σ<sub>c</sub>| ≤ 0,6·f<sub>ck</sub> = '+fmt(limComp,2)+' MPa (rara) · |σ<sub>c</sub>| ≤ 0,45·f<sub>ck</sub> = '+fmt(limCompQP,2)+' MPa na combinação quase permanente (fluência linear, NBR 6118 8.2.10.1)\n'+
+    '<i>Critérios de transferência conforme prática usual e NBR 6118 17.2.4.3 — verificação simplificada, requer validação pelo engenheiro responsável.</i>';
+  grafico('gSsup',{yl:'σ (MPa)',xl:'x (m)',series:[
+    {nome:'Transferência',x:xs,y:R.fases[1].sup,cor:CORES.roxo,un:' MPa',dec:3},
+    {nome:'Rara',x:xs,y:R.fases[6].sup,cor:CORES.azul,un:' MPa',dec:3},
+    {nome:'Q. permanente',x:xs,y:R.fases[4].sup,cor:CORES.verde,dash:'5 3',un:' MPa',dec:3}]});
+  grafico('gSinf',{yl:'σ (MPa)',xl:'x (m)',series:[
+    {nome:'Transferência',x:xs,y:R.fases[1].inf,cor:CORES.roxo,un:' MPa',dec:3},
+    {nome:'Rara',x:xs,y:R.fases[6].inf,cor:CORES.azul,un:' MPa',dec:3},
+    {nome:'Q. permanente',x:xs,y:R.fases[4].inf,cor:CORES.verde,dash:'5 3',un:' MPa',dec:3}]});
+  tabela('tabELS',['Estado limite','Combinação exigida','Valor','Limite','Situação'],
+    R.els.ver.map(v=>[v.estado,v.comb,v.valor===null?'—':fmt(v.valor,v.unid==='mm'?3:3)+' '+v.unid,
+      fmt(v.limite,v.unid==='mm'?2:2)+' '+v.unid,sitHTML(v.sit)+'<br><span class="nota">'+v.obs+'</span>']));
+  $('#memELS').innerHTML='<b>Tipo de protensão exigido (NBR 6118 Tabela 13.4)</b>: '+R.els.combELS.tipo+'\n'+
+    'Sistema: '+({pre:'pré-tração',posA:'pós-tração aderente',posN:'pós-tração não aderente'}[m.prot.sistema])+
+    ' · Classe de agressividade: CAA '+['','I','II','III','IV'][m.conc.caa]+'\n'+
+    'Verificações exigidas: '+R.els.combELS.ex.map(e=>e[0]+' na combinação '+e[1]).join(' ; ')+'\n<hr>'+
+    'M₀ (descompressão) = P<sub>∞</sub>(W<sub>b</sub>/A + e) = '+fmt(R.els.M0,2)+' kN·m\n'+
+    'M<sub>r</sub> (fissuração) = α·f<sub>ct,m</sub>·W<sub>b</sub> + M₀ = '+fmt(R.els.Mr,2)+' kN·m  (α = '+(m.geo.tipo==='ret'?'1,5':'1,2')+')\n'+
+    'M<sub>freq</sub> máximo = '+fmt(R.els.MfreqMax,2)+' kN·m  →  '+(R.els.fissurada?'<b>seção fissurada</b>':'<b>seção não fissurada</b>')+
+    (R.els.wk?'\nσ<sub>s</sub> (estádio II simplificado) = '+fmt(R.els.sigmaS,1)+' MPa  →  w<sub>k</sub> = '+fmt(R.els.wk,3)+' mm':'');
+  const fl=R.fl;
+  tabela('tabFlecha',['Parcela','Flecha no meio do vão (mm)','Observação'],[
+    ['δ permanentes (g)',fmt(interp(L/2,xs,fl.dG)*1000),'E<sub>cs</sub>·I<sub>c</sub>'],
+    ['δ variável (q)',fmt(interp(L/2,xs,fl.dQ)*1000),'característica'],
+    ['δ protensão (contraflecha)',fmt(interp(L/2,xs,fl.dP)*1000),'negativa = para cima'],
+    ['δ imediata total',fmt(fl.exImed.max*1000)+' / '+fmt(fl.exImed.min*1000),'máx / mín'],
+    ['δ diferida (t<sub>∞</sub>)',fmt(fl.exInf.max*1000),'δ<sub>qp</sub>·(1+φ), φ = '+fmt(R.perdas.fi,2)],
+    ['Limite L/250',fmt(fl.lim*1000),sitHTML(Math.abs(fl.exInf.max)<=fl.lim?'ok':'no')]]);
+  $('#memFlecha').innerHTML='<b>Flechas por integração numérica de EI·v″ = −M(x)</b>\n'+
+    'E<sub>cs</sub>·I<sub>c</sub> = '+fmt(mc.Ecs/1000,1)+' GPa × '+fmt(sec.I*1e8,0)+' cm⁴ = '+fmt(mc.Ecs*MPa*sec.I,0)+' kN·m²\n'+
+    'δ<sub>prot</sub> obtida integrando M<sub>p</sub>(x) = −P<sub>∞</sub>(x)·e(x) — válida para qualquer traçado.\n'+
+    'δ<sub>∞</sub> = δ<sub>quase permanente</sub>·(1 + φ) = δ·(1 + '+fmt(R.perdas.fi,2)+')\n'+
+    'Limite de aceitabilidade sensorial visual: L/250 = '+fmt(fl.lim*1000,2)+' mm (NBR 6118 Tabela 13.3)\n'+
+    '<i>Rigidez equivalente de seção fissurada (Branson) e cálculo incremental no tempo: <b>NÃO IMPLEMENTADO</b>.</i>';
+  grafico('gContra',{yl:'δ (mm)',xl:'x (m)',inverter:true,series:[
+    {nome:'protensão',x:xs,y:fl.dP.map(v=>v*1000),cor:CORES.roxo,un:' mm'},
+    {nome:'cargas',x:xs,y:xs.map((x,i)=>(fl.dG[i]+fl.dQ[i])*1000),cor:CORES.azul,un:' mm'},
+    {nome:'resultante',x:xs,y:fl.dImed.map(v=>v*1000),cor:CORES.verde,w:2.5,un:' mm'}]});
+  tabela('tabRig',['Grandeza','Valor','Unidade'],[
+    ['E<sub>cs</sub>',fmt(mc.Ecs/1000,1),'GPa'],
+    ['I — seção bruta',fmt(sec.I*1e8,0),'cm⁴'],
+    ['E<sub>cs</sub>·I',fmt(mc.Ecs*MPa*sec.I,0),'kN·m²'],
+    ['Estado da seção (comb. frequente)',R.els.fissurada?'fissurada':'não fissurada','—'],
+    ['I — seção fissurada (estádio II)','NÃO IMPLEMENTADO','—'],
+    ['Rigidez efetiva de longo prazo','E<sub>cs</sub>·I/(1+φ) = '+fmt(mc.Ecs*MPa*sec.I/(1+R.perdas.fi),0),'kN·m²']]);
+
+  /* --- armaduras --- */
+  const nbInf=Math.max(1,Math.round(val('nBarras')||1));
+  const Abar=Math.PI*Math.pow(m.aco.phiLong/1000,2)/4;
+  tabela('tabAtiva',['Grandeza','Valor','Unidade'],[
+    ['Cordoalhas',fmt(m.prot.n,0)+' Ø '+fmt(val('phiCord')||0,1)+' mm','un'],
+    ['A<sub>p</sub> total',fmt(R.Ap*1e4,2),'cm²'],
+    ['Força inicial P₀',fmt(R.P0),'kN'],['Tensão inicial σ<sub>pi</sub>',fmt(m.prot.sigmaPi,1),'MPa'],
+    ['Força efetiva P<sub>∞</sub>',fmt(R.Pinf0),'kN'],['Tensão efetiva σ<sub>p∞</sub>',fmt(R.Pinf0/R.Ap/MPa,1),'MPa'],
+    ['Excentricidade no meio',fmt(R.cabo.e[i0]*100),'cm'],['Excentricidade no apoio',fmt(R.cabo.e[0]*100),'cm'],
+    ['d<sub>p</sub> (topo à armadura ativa)',fmt(R.dp*100),'cm']]);
+  tabela('tabPassiva',['Grandeza','Valor','Unidade'],[
+    ['A<sub>s</sub> necessária (ELU)',fmt(R.AsNec*1e4,2),'cm²'],
+    ['A<sub>s</sub> mínima (M<sub>d,mín</sub>)',fmt(R.AsMin*1e4,2),'cm²'],
+    ['ρ<sub>mín</sub>·A<sub>c</sub> (referência)',fmt(R.AsMinTx*1e4,2),'cm²'],
+    ['A<sub>s</sub> adotada',fmt(R.AsAdot*1e4,2),'cm²'],
+    ['Barras equivalentes','Ø'+fmt(m.aco.phiLong,1)+' mm → '+Math.max(2,Math.ceil(R.AsAdot/Abar))+' barras','un'],
+    ['A<sub>s</sub> efetiva ('+nbInf+' barras)',fmt(nbInf*Abar*1e4,2),'cm²'],
+    ['Taxa ρ = A<sub>s</sub>/A<sub>c</sub>',fmt(R.AsAdot/sec.A*100,3),'%'],
+    ['Armadura de pele',sec.h>=0.60?'exigida: 0,10% A<sub>c,alma</sub> por face = '+fmt(0.001*sec.bw*sec.h*1e4/2,2)+' cm²/face':'não exigida (h < 60 cm)','—']]);
+  $('#memPassiva').innerHTML='ρ<sub>mín</sub> = máx(0,15% ; ω<sub>mín</sub>·f<sub>cd</sub>/f<sub>yd</sub>) = '+fmt(R.rhoMin*100,3)+'%\n'+
+    'M<sub>d,mín</sub> = 0,8·W<sub>0</sub>·f<sub>ctk,sup</sub> = 0,8·'+fmt(sec.Wb*1e6,0)+' cm³ × '+fmt(mc.fctksup,2)+' MPa = '+fmt(R.MdMin,2)+' kN·m\n'+
+    'A armadura mínima foi obtida impondo M<sub>Rd</sub> ≥ M<sub>d,mín</sub> considerando a contribuição da armadura ativa (NBR 6118 17.3.5.2.1).\n'+
+    '<i>Ancoragem das barras, emendas, ganchos e distribuição em camadas: <b>NÃO IMPLEMENTADO — detalhar manualmente</b>.</i>';
+  tabela('tabEstribos',['Grandeza','Valor','Unidade'],[
+    ['Estribo','Ø'+fmt(m.aco.phiEst,1)+' mm, '+fmt(m.aco.ramos,0)+' ramos','—'],
+    ['A<sub>sw</sub>/s adotada',fmt(c.AswAdot*1e4,2),'cm²/m'],
+    ['Espaçamento s',fmt(c.s*100,1),'cm'],['s máximo',fmt(c.smax*100,1),'cm'],
+    ['V<sub>Sd</sub>/V<sub>Rd3</sub>',fmt(R.uso.cisArm*100),'%']]);
+
+  /* --- galeria --- */
+  const gal=$('#galeria');
+  const lista=[['gMom','Momento fletor'],['gCort','Esforço cortante'],['gFlecha','Flecha'],
+    ['gPx','Força de protensão × comprimento'],['gMp','Momento de protensão'],
+    ['gSsup','Tensão na fibra superior'],['gSinf','Tensão na fibra inferior'],
+    ['gPerdas','Perdas de protensão'],['gPt','Força efetiva × tempo'],['gFt','Flecha × tempo'],
+    ['gVrd','V Sd × V Rd'],['gMrd','M Sd × M Rd'],['gContra','Contraflecha × flecha']];
+  if(gal.children.length!==lista.length){
+    gal.innerHTML=lista.map(([id,t])=>'<div class="cartao"><h3>'+t+'</h3><div class="corpo"><div class="graf" id="'+id+'-g"></div>'+
+      '<div class="linha-bt"><button class="bt mini" data-png="'+id+'-g">PNG</button></div></div></div>').join('');
+  }
+  lista.forEach(([id])=>{const c=CHARTS[id];if(c)grafico(id+'-g',c.cfg);});
+
+  /* --- resultados --- */
+  tabela('tabResumo',['Item','Valor'],[
+    ['Obra / elemento',esc(sval('obra'))+' — '+esc(sval('elemento'))],
+    ['Vão L',fmt(L)+' m'],
+    ['Seção',(m.geo.tipo==='T'?'T':m.geo.tipo==='I'?'I':'retangular')+' — b<sub>w</sub> × h = '+fmt(sec.bw*100,1)+' × '+fmt(sec.h*100,1)+' cm'],
+    ['Concreto','C'+fmt(mc.fck,0)+' · CAA '+['','I','II','III','IV'][m.conc.caa]],
+    ['Protensão',fmt(m.prot.n,0)+' cordoalhas — '+({pre:'pré-tração',posA:'pós-tração aderente',posN:'pós-tração não aderente'}[m.prot.sistema])],
+    ['Força inicial P₀',fmt(R.P0)+' kN'],
+    ['Força efetiva P<sub>∞</sub>',fmt(R.Pinf0)+' kN ('+fmt((1-R.Pinf0/R.P0)*100,1)+'% de perdas)'],
+    ['Momento máximo M<sub>Sd</sub>',fmt(R.exMd.max)+' kN·m'],
+    ['Cortante máximo V<sub>Sd</sub>',fmt(c.VdAp)+' kN'],
+    ['Flecha máxima δ<sub>∞</sub>',fmt(fl.exInf.max*1000)+' mm (limite '+fmt(fl.lim*1000)+' mm)'],
+    ['Armadura passiva A<sub>s</sub>',fmt(R.AsAdot*1e4,2)+' cm²'],
+    ['Armadura transversal A<sub>sw</sub>/s',fmt(c.AswAdot*1e4,2)+' cm²/m (Ø'+fmt(m.aco.phiEst,1)+' c/'+fmt(c.s*100,0)+' cm)']]);
+
+  const diag=[];
+  const add=(n,s,motivo)=>diag.push({n:n,s:s,m:motivo});
+  add('Flexão (ELU)',R.uso.flex<=1?(R.uso.flex<=0.95?'ok':'at'):'no',
+    'M<sub>Sd</sub> = '+fmt(R.exMd.max)+' kN·m · M<sub>Rd</sub> = '+fmt(f.MRd)+' kN·m · utilização '+fmt(R.uso.flex*100,1)+'%');
+  add('Cisalhamento — biela',R.uso.cis<=1?'ok':'no','V<sub>Sd</sub>/V<sub>Rd2</sub> = '+fmt(R.uso.cis*100,1)+'%');
+  add('Cisalhamento — estribos',R.uso.cisArm<=1?'ok':'no','V<sub>Sd</sub> = '+fmt(c.VdAp)+' kN · V<sub>Rd3</sub> = '+fmt(c.VRd3)+' kN');
+  add('Tensões na transferência',(R.uso.transf<=1&&R.tracaoTransf<=limTracT)?'ok':(R.uso.transf<=1.05?'at':'no'),
+    'compressão '+fmt(Math.abs(Math.min.apply(null,R.fases[1].sup.concat(R.fases[1].inf))))+' ≤ '+fmt(limTransf)+' MPa · tração '+fmt(R.tracaoTransf)+' ≤ '+fmt(limTracT)+' MPa');
+  add('Tensões em serviço',R.uso.tens<=1?'ok':'no','σ<sub>c,máx</sub> = '+fmt(Math.abs(Math.min.apply(null,R.fases[6].sup.concat(R.fases[6].inf))))+' MPa ≤ 0,6 f<sub>ck</sub> = '+fmt(limComp)+' MPa');
+  R.els.ver.forEach(v=>add(v.estado,v.sit,'combinação '+v.comb+(v.valor!==null?' · valor '+fmt(v.valor,3)+' '+v.unid:'')));
+  add('Flecha',R.uso.flecha<=1?(R.uso.flecha<=0.9?'ok':'at'):'no','δ<sub>∞</sub> = '+fmt(fl.exInf.max*1000)+' mm · limite L/250 = '+fmt(fl.lim*1000)+' mm');
+  add('Tensão de protensão',R.uso.prot<=1?'ok':'no','σ<sub>pi</sub> = '+fmt(m.prot.sigmaPi,1)+' MPa ≤ '+fmt(R.sigmaLim,1)+' MPa');
+  add('Ancoragem e introdução da protensão','nd','Comprimento de transferência/ancoragem e verificação da zona de introdução: NÃO IMPLEMENTADO — verificar manualmente.');
+  add('Equilíbrio global',R.eq.erro<1e-3?'ok':'no','ΣF = 0 e ΣM = 0 verificados numericamente (erro '+fmt(R.eq.erro*100,6)+'%)');
+  $('#diagnostico').innerHTML=diag.map(d=>'<div style="padding:8px 0;border-bottom:1px solid #eef2f5">'+
+    sitHTML(d.s)+' <b style="font-size:13px"> '+d.n+'</b><div class="nota" style="margin-top:2px">'+d.m+'</div></div>').join('');
+
+  const barras=[['Flexão',R.uso.flex],['Cisalhamento',R.uso.cis],['Estribos',R.uso.cisArm],
+    ['Tensão serviço',R.uso.tens],['Transferência',R.uso.transf],['Flecha',R.uso.flecha],['Protensão',R.uso.prot]];
+  $('#utilizacao').innerHTML=barras.map(([n,v])=>{
+    const cl=v<=0.9?'':(v<=1?'at':'no');
+    return '<div class="uso"><span>'+n+'</span><span class="barra"><i class="'+cl+'" style="width:'+Math.min(v*100,140)+'%"></i></span><span class="v">'+fmt(v*100,1)+'%</span></div>';}).join('');
+
+  // comparação CA x protendido
+  const dsCA=sec.h-m.geo.cob-0.02;
+  const baseCA={Ap:0,dp:dsCA,As:0,ds:dsCA,As2:0,ds2:m.geo.dl,fyd:R.fyd,Es:R.Es,ap:R.ap,epre:0};
+  let AsCA=0;{let lo=0,hi=0.06*sec.A;
+    const g=(As)=>ENGINE.flexao(sec,mc,Object.assign({},baseCA,{As:As})).MRd-R.exMd.max;
+    if(g(hi)<0)AsCA=NaN;else{for(let i=0;i<60;i++){const mid=(lo+hi)/2;if(g(mid)>0)hi=mid;else lo=mid;}AsCA=(lo+hi)/2;}}
+  const flCA=extremos(xs,xs.map((x,i)=>(fl.dG[i]+m.comb.psi2*fl.dQ[i])*(1+R.perdas.fi)));
+  tabela('tabComp',['Parâmetro','Concreto armado','Protendido'],[
+    ['M<sub>Sd</sub> (kN·m)',fmt(R.exMd.max),fmt(R.exMd.max)],
+    ['A<sub>s</sub> (cm²)',isFinite(AsCA)?fmt(AsCA*1e4,2):'seção insuficiente',fmt(R.AsAdot*1e4,2)],
+    ['A<sub>p</sub> (cm²)','0,00',fmt(R.Ap*1e4,2)],
+    ['Flecha δ<sub>∞</sub> (mm)',fmt(flCA.max*1000),fmt(fl.exInf.max*1000)],
+    ['σ<sub>inf</sub> na combinação rara (MPa)',fmt(interp(L/2,xs,xs.map((x,i)=>(R.Mg[i]+R.Mq[i])*sec.yb/sec.I/MPa))),fmt(R.fases[6].infMid)],
+    ['Peso próprio (kN/m)',fmt(R.gpp),fmt(R.gpp)],
+    ['Estado de fissuração','fissurada (estádio II)',R.els.fissurada?'fissurada':'não fissurada']]);
+
+  /* --- rodapé e seção --- */
+  $('#resumoRodape').innerHTML=
+    '<span>M<sub>Sd</sub> <b>'+fmt(R.exMd.max)+'</b> kN·m</span>'+
+    '<span>M<sub>Rd</sub> <b>'+fmt(f.MRd)+'</b> kN·m</span>'+
+    '<span>P<sub>∞</sub> <b>'+fmt(R.Pinf0)+'</b> kN</span>'+
+    '<span>δ<sub>∞</sub> <b>'+fmt(fl.exInf.max*1000)+'</b> mm</span>'+
+    '<span>A<sub>s</sub> <b>'+fmt(R.AsAdot*1e4,2)+'</b> cm²</span>'+
+    '<span>'+sitHTML(diag.some(d=>d.s==='no')?'no':(diag.some(d=>d.s==='at'||d.s==='nd')?'at':'ok'))+'</span>';
+  $('#limitacoes').innerHTML=[
+    'Viga biapoiada de seção constante; vigas contínuas, engastadas e em balanço não estão implementadas.',
+    'Perdas progressivas pelo processo simplificado (9.6.3.4.2); o processo aproximado passo a passo não está implementado.',
+    'φ e ε<sub>cs</sub> estimados por interpolação da Tabela 8.2 quando o modo automático está ativo.',
+    'Flechas calculadas com rigidez de seção bruta; rigidez equivalente de seção fissurada não implementada.',
+    'Abertura de fissuras calculada com σ<sub>s</sub> por expressão simplificada de estádio II.',
+    'Ancoragem, zona de introdução da protensão, decalagem do diagrama e fadiga não implementados.',
+    'Combinações especiais e excepcionais não implementadas.'
+  ].map(t=>'<div class="aviso-box">'+t+'</div>').join('');
+  atualizaSecaoX();
+  lerCursor();
+}
+
+function atualizaSecaoX(){
+  const R=state.R;if(!R)return;
+  const sl=$('#secX');sl.max=R.L;sl.step=R.L/200;
+  const x=Math.min(num(sl.value),R.L);
+  $('#secXv').textContent=fmt(x)+' m';
+  const i=Math.round(x/R.L*(R.n-1));
+  const f=R.fases;
+  tabela('tabSecX',['Grandeza','Valor','Unidade'],[
+    ['M (g+q)',fmt(R.Mg[i]+R.Mq[i]),'kN·m'],['M<sub>Sd</sub>',fmt(R.Md[i]),'kN·m'],
+    ['V (g+q)',fmt(R.Vg[i]+R.Vq[i]),'kN'],['V<sub>Sd</sub>',fmt(R.Vd[i]),'kN'],
+    ['P<sub>∞</sub>(x)',fmt(R.Pinf[i]),'kN'],['e(x)',fmt(R.cabo.e[i]*100),'cm'],
+    ['M<sub>p</sub>(x)',fmt(R.Mp[i]),'kN·m'],
+    ['σ<sub>sup</sub> (rara)',fmt(f[6].sup[i],3),'MPa'],['σ<sub>inf</sub> (rara)',fmt(f[6].inf[i],3),'MPa'],
+    ['σ<sub>sup</sub> (transferência)',fmt(f[1].sup[i],3),'MPa'],['σ<sub>inf</sub> (transferência)',fmt(f[1].inf[i],3),'MPa'],
+    ['δ imediata',fmt(R.fl.dImed[i]*1000),'mm'],['M<sub>Rd</sub>',fmt(R.MRd[i]),'kN·m'],
+    ['Linha neutra (ELU)',fmt(R.flex.x*100),'cm'],
+    ['A<sub>p</sub> / A<sub>s</sub>',fmt(R.Ap*1e4,2)+' / '+fmt(R.AsAdot*1e4,2),'cm²']]);
+}
+
+/* ============================================================
+   TABELAS DINÂMICAS DE ENTRADA
+   ============================================================ */
+function linhaInput(v,cls,step){return '<input type="number" step="'+(step||0.1)+'" value="'+v+'" data-c="'+cls+'" style="width:100%;min-height:34px;padding:5px;border:1px solid var(--risco);border-radius:4px">';}
+function selCaso(v){return '<select data-c="caso" style="min-height:34px;padding:4px;border:1px solid var(--risco);border-radius:4px"><option value="g"'+(v==='g'?' selected':'')+'>permanente</option><option value="q"'+(v==='q'?' selected':'')+'>variável</option></select>';}
+function renderPL(){
+  $('#tabPL tbody').innerHTML=state.pontos.map((p,i)=>'<tr data-i="'+i+'"><td>'+(i+1)+'</td><td>'+linhaInput(p.x,'x')+
+    '</td><td>'+linhaInput(p.P,'P')+'</td><td>'+selCaso(p.caso)+'</td><td><button class="bt mini" data-del="pontos">✕</button></td></tr>').join('');}
+function renderMM(){
+  $('#tabMM tbody').innerHTML=state.momentos.map((p,i)=>'<tr data-i="'+i+'"><td>'+(i+1)+'</td><td>'+linhaInput(p.x,'x')+
+    '</td><td>'+linhaInput(p.M,'M')+'</td><td>'+selCaso(p.caso)+'</td><td><button class="bt mini" data-del="momentos">✕</button></td></tr>').join('');}
+function renderDL(){
+  $('#tabDL tbody').innerHTML=state.dist.map((p,i)=>'<tr data-i="'+i+'"><td>'+(i+1)+'</td><td>'+linhaInput(p.x1,'x1')+'</td><td>'+
+    linhaInput(p.x2,'x2')+'</td><td>'+linhaInput(p.q1,'q1')+'</td><td>'+linhaInput(p.q2,'q2')+'</td><td>'+selCaso(p.caso)+
+    '</td><td><button class="bt mini" data-del="dist">✕</button></td></tr>').join('');}
+function renderPolig(){
+  $('#tabPolig tbody').innerHTML=state.polig.map((p,i)=>'<tr data-i="'+i+'"><td>'+(i+1)+'</td><td>'+linhaInput(p.x,'x')+
+    '</td><td>'+linhaInput(p.e,'e')+'</td><td><button class="bt mini" data-del="polig">✕</button></td></tr>').join('');}
+function renderPers(){
+  $('#tabPers tbody').innerHTML=state.pers.map((p,i)=>'<tr data-i="'+i+'"><td>'+(i+1)+'</td><td>'+linhaInput(p.b,'b')+
+    '</td><td>'+linhaInput(p.h,'h')+'</td><td>'+linhaInput(p.y,'y')+'</td><td><button class="bt mini" data-del="pers">✕</button></td></tr>').join('');}
+function renderTabelas(){renderPL();renderMM();renderDL();renderPolig();renderPers();}
+
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest('button');if(!b)return;
+  if(b.dataset.del){const tr=b.closest('tr');state[b.dataset.del].splice(+tr.dataset.i,1);renderTabelas();agendar();}
+  if(b.dataset.png)exportarPNG(b.dataset.png);
+});
+$('#addPL').onclick=()=>{state.pontos.push({x:+(val('L')/2).toFixed(2),P:50,caso:'q'});renderPL();agendar();};
+$('#addMM').onclick=()=>{state.momentos.push({x:+(val('L')/2).toFixed(2),M:0,caso:'g'});renderMM();agendar();};
+$('#addDL').onclick=()=>{state.dist.push({x1:0,x2:+(val('L')/2).toFixed(2),q1:0,q2:10,caso:'q'});renderDL();agendar();};
+$('#addPolig').onclick=()=>{state.polig.push({x:+(val('L')/2).toFixed(2),e:20});state.polig.sort((a,b)=>a.x-b.x);renderPolig();agendar();};
+$('#addPers').onclick=()=>{state.pers.push({b:30,h:20,y:0});renderPers();agendar();};
+document.addEventListener('input',ev=>{
+  const t=ev.target,tr=t.closest('tr');
+  if(tr&&t.dataset.c){
+    const tb=t.closest('table').id,i=+tr.dataset.i;
+    const map={tabPL:'pontos',tabMM:'momentos',tabDL:'dist',tabPolig:'polig',tabPers:'pers'};
+    if(map[tb]){state[map[tb]][i][t.dataset.c]=t.dataset.c==='caso'?t.value:num(t.value);agendar();}
+  }
+});
+document.addEventListener('change',ev=>{
+  const t=ev.target,tr=t.closest('tr');
+  if(tr&&t.dataset.c==='caso'){const tb=t.closest('table').id,i=+tr.dataset.i;
+    const map={tabPL:'pontos',tabMM:'momentos',tabDL:'dist'};
+    if(map[tb]){state[map[tb]][i].caso=t.value;agendar();}}
+});
+
+/* ============================================================
+   INTERAÇÃO GERAL
+   ============================================================ */
+$$('.aba').forEach(a=>a.onclick=()=>{
+  $$('.aba').forEach(x=>x.setAttribute('aria-selected','false'));
+  a.setAttribute('aria-selected','true');
+  $$('.painel').forEach(p=>p.classList.remove('on'));
+  $('#p-'+a.dataset.p).classList.add('on');
+  window.scrollTo({top:0,behavior:'instant'});
+});
+function visibilidade(){
+  const t=sval('tipoSec');
+  $$('.gT').forEach(e=>e.style.display=(t==='T'||t==='I')?'':'none');
+  $$('.gI').forEach(e=>e.style.display=(t==='I')?'':'none');
+  $('#boxPers').hidden=(t!=='pers');
+  const pf=sval('perfil');
+  $('#boxPolig').hidden=(pf!=='polig');
+  $$('.pg').forEach(e=>e.style.display=(pf==='polig')?'none':'');
+  $('#gpp').readOnly=chk('ppAuto');
+  const auto=sval('autoLd')==='1';
+  $('#fluencia').readOnly=auto;$('#retracao').readOnly=auto;
+}
+let timer=null;
+function agendar(){clearTimeout(timer);timer=setTimeout(calcular,90);}
+function calcular(){
+  visibilidade();
+  try{
+    const m=lerModelo();
+    const R=ENGINE.rodar(m);
+    state.R=R;
+    if(chk('ppAuto'))setv('gpp',R.gpp.toFixed(2));
+    setv('hfic',R.perdas.hfic.toFixed(1));
+    if(sval('autoLd')==='1'){setv('fluencia',R.perdas.fi.toFixed(2));setv('retracao',(R.perdas.ecs*1000).toFixed(3));}
+    render(R);
+    sincronizaSliders();
+  }catch(e){
+    console.error(e);
+    $('#avisosCabo').innerHTML='<div class="aviso-box erro-box">Não foi possível concluir o cálculo: '+esc(e.message)+'. Revise os dados de entrada.</div>';
+  }
+}
+$('#btCalcular').onclick=calcular;
+$('#secX').oninput=atualizaSecaoX;
+$('#btArrasta').onclick=function(){state.arrastar=!state.arrastar;
+  this.textContent=state.arrastar?'Concluir edição':'Editar pontos arrastando';desenhaCabo(state.R);};
+$$('main input, main select').forEach(e=>{
+  if(e.closest('#tabPL,#tabMM,#tabDL,#tabPolig,#tabPers'))return;
+  if(e.id&&e.id.charAt(0)==='s'&&e.type==='range')return;
+  e.addEventListener('input',agendar);e.addEventListener('change',agendar);});
+
+/* unidades */
+const IDS_SEC=['h','bw','bf','hf','bfi','hfi','cob','dLinha','eApoio','eMeio'];
+let uSecAnt='cm',uCompAnt='m';
+$('#uSec').addEventListener('change',()=>{
+  const novo=sval('uSec'),f=(uSecAnt==='cm'?0.01:0.001)/(novo==='cm'?0.01:0.001);
+  IDS_SEC.forEach(id=>setv(id,+(val(id)*f).toFixed(4)));
+  state.polig.forEach(p=>p.e=+(p.e*f).toFixed(4));renderPolig();
+  $$('.us').forEach(e=>e.textContent=novo);uSecAnt=novo;agendar();});
+$('#uComp').addEventListener('change',()=>{
+  const novo=sval('uComp'),f=(uCompAnt==='m'?1:0.01)/(novo==='m'?1:0.01);
+  setv('L',+(val('L')*f).toFixed(4));$('#uL').textContent=novo;uCompAnt=novo;agendar();});
+
+/* aço de protensão pré-definido */
+$('#classeP').addEventListener('change',()=>{
+  const v=sval('classeP');if(v==='man')return;
+  const f={'190RB':1900,'210RB':2100,'190RN':1900,'175RB':1750}[v];
+  setv('fptk',f);setv('fpyk',Math.round(0.9*f));
+  const lim=(sval('sistema')==='pre'?0.77:0.74)*f;setv('sigmaPi',Math.round(Math.min(lim,0.85*0.9*f)/5)*5);agendar();});
+$('#phiCord').addEventListener('change',()=>{
+  const a={'9.5':0.548,'12.7':0.987,'15.2':1.400}[sval('phiCord')];
+  if(a)setv('Ap1',a);agendar();});
+
+/* sliders */
+const SL=[['sL','L',' m',1],['sH','h',' cm',0],['sQ','q1',' kN/m',1],['sN','nCord',' un',0],
+          ['sS','sigmaPi',' MPa',0],['sE','eMeio',' cm',1]];
+SL.forEach(([sid,tid,un,d])=>{
+  const s=$('#'+sid);
+  s.addEventListener('input',()=>{setv(tid,s.value);$('#'+sid+'v').textContent=fmt(num(s.value),d)+un;agendar();});});
+function sincronizaSliders(){SL.forEach(([sid,tid,un,d])=>{const s=$('#'+sid);s.value=val(tid);
+  $('#'+sid+'v').textContent=fmt(val(tid),d)+un;});}
+
+/* ============================================================
+   STORAGE
+   ============================================================ */
+const CHAVE='apavan_vigas_protendidas';
+function coletar(){
+  const o={campos:{},state:{pontos:state.pontos,momentos:state.momentos,dist:state.dist,polig:state.polig,pers:state.pers}};
+  $$('main input, main select, header input').forEach(e=>{if(!e.id||e.type==='range')return;
+    o.campos[e.id]=e.type==='checkbox'?e.checked:e.value;});
+  return o;
+}
+function aplicar(o){
+  if(!o)return;
+  Object.keys(o.campos||{}).forEach(id=>{const e=$('#'+id);if(!e)return;
+    if(e.type==='checkbox')e.checked=o.campos[id];else e.value=o.campos[id];});
+  ['pontos','momentos','dist','polig','pers'].forEach(k=>{if(o.state&&o.state[k])state[k]=o.state[k];});
+  uSecAnt=sval('uSec');uCompAnt=sval('uComp');$$('.us').forEach(e=>e.textContent=uSecAnt);$('#uL').textContent=uCompAnt;
+  renderTabelas();calcular();
+}
+function projetos(){try{return JSON.parse(localStorage.getItem(CHAVE)||'{}');}catch(e){return {};}}
+function gravar(p){localStorage.setItem(CHAVE,JSON.stringify(p));}
+function listarProjetos(){
+  const p=projetos(),ks=Object.keys(p);
+  $('#listaProjetos').innerHTML=ks.length?ks.map(k=>'<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #eef2f5">'+
+    '<span style="flex:1">'+esc(k)+'</span>'+
+    '<button class="bt mini" data-abrir="'+esc(k)+'">Abrir</button>'+
+    '<button class="bt mini" data-dup="'+esc(k)+'">Duplicar</button>'+
+    '<button class="bt mini" data-exc="'+esc(k)+'">Excluir</button></div>').join('')
+    :'<div class="nota">Nenhum projeto salvo ainda. Use “Salvar” no topo da tela.</div>';
+  $$('#listaProjetos button').forEach(b=>b.onclick=()=>{
+    const p2=projetos();
+    if(b.dataset.abrir){aplicar(p2[b.dataset.abrir]);}
+    else if(b.dataset.dup){p2[b.dataset.dup+' (cópia)']=p2[b.dataset.dup];gravar(p2);listarProjetos();}
+    else if(b.dataset.exc){if(confirm('Excluir o projeto “'+b.dataset.exc+'”?')){delete p2[b.dataset.exc];gravar(p2);listarProjetos();}}});
+}
+$('#btSalvar').onclick=()=>{
+  const nome=prompt('Nome do projeto:',sval('obra')+' — '+sval('elemento'));
+  if(!nome)return;const p=projetos();p[nome]=coletar();gravar(p);listarProjetos();
+  alert('Projeto salvo no dispositivo.');};
+$('#btAbrir').onclick=()=>{listarProjetos();$$('.aba').forEach(a=>{if(a.dataset.p==='relatorio')a.click();});};
+$('#btNovo').onclick=()=>{if(confirm('Iniciar um novo projeto? Os dados não salvos serão perdidos.'))location.reload();};
+$('#btJSON').onclick=()=>{
+  const b=new Blob([JSON.stringify(coletar(),null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='apavan-'+(sval('elemento')||'viga')+'.json';a.click();};
+$('#btImport').onclick=()=>{
+  const i=document.createElement('input');i.type='file';i.accept='.json';
+  i.onchange=()=>{const fr=new FileReader();fr.onload=()=>{try{aplicar(JSON.parse(fr.result));}catch(e){alert('Arquivo inválido.');}};fr.readAsText(i.files[0]);};
+  i.click();};
+
+/* ---------- Exemplo ---------- */
+$('#btExemplo').onclick=()=>{
+  const ex={campos:{obra:'EXEMPLO ILUSTRATIVO — NÃO UTILIZAR DIRETAMENTE EM OBRA',elemento:'V-EX',local:'Tubarão — SC',
+    tipoSec:'T',L:'12',h:'80',bw:'30',bf:'80',hf:'15',cob:'4',dLinha:'5',uSec:'cm',uComp:'m',
+    fck:'40',agreg:'1.0',cimento:'0.25',t0:'7',gamaC:'1.4',pesoEsp:'25',caa:'3',
+    tipoAco:'50',Es:'210',gamaS:'1.15',phiLong:'16',phiEst:'8',ramos:'2',
+    classeP:'190RB',fptk:'1900',fpyk:'1710',Ep:'200',phiCord:'12.7',Ap1:'0.987',nCord:'12',
+    sistema:'posA',sigmaPi:'1350',nCabos:'3',mu:'0.2',kOnd:'0.002',slip:'6',ladosProt:'1',
+    perfil:'parab',eApoio:'10',eMeio:'28',ppAuto:true,g2:'8',q1:'12',
+    gG:'1.4',gQ:'1.4',psi0:'0.7',psi1:'0.6',psi2:'0.4',umid:'75',tInf:'10000',autoLd:'1',
+    nBarras:'4',nBarras2:'2',camadas:'2',npts:'201'},
+    state:{pontos:[],momentos:[],dist:[],polig:[{x:0,e:10},{x:6,e:28},{x:12,e:10}],pers:[]}};
+  aplicar(ex);
+  alert('Exemplo carregado.\n\nEXEMPLO ILUSTRATIVO — NÃO UTILIZAR DIRETAMENTE EM OBRA.');};
+
+/* ============================================================
+   RELATÓRIO / CSV
+   ============================================================ */
+$('#btCSV').onclick=()=>{
+  const R=state.R;if(!R)return;
+  let csv='x (m);M (kN.m);V (kN);delta (mm);P (kN);e (cm);sigma_sup (MPa);sigma_inf (MPa)\n';
+  for(let i=0;i<R.n;i++){
+    csv+=[R.xs[i],R.Mg[i]+R.Mq[i],R.Vg[i]+R.Vq[i],R.fl.dImed[i]*1000,R.Pinf[i],R.cabo.e[i]*100,
+          R.fases[6].sup[i],R.fases[6].inf[i]].map(v=>v.toFixed(5).replace('.',',')).join(';')+'\n';}
+  const b=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='apavan-'+(sval('elemento')||'viga')+'.csv';a.click();};
+
+function svgDe(id){const s=$('#'+id+' svg');return s?s.outerHTML:'';}
+function tabDe(id){const t=$('#'+id);return t?'<table>'+t.innerHTML+'</table>':'';}
+function memDe(id){const t=$('#'+id);return t?'<pre>'+t.innerHTML+'</pre>':'';}
+$('#btPDF').onclick=()=>{
+  const R=state.R;if(!R){alert('Execute o cálculo antes de gerar o relatório.');return;}
+  const sec=(n,t,c)=>'<h2>'+n+'. '+t+'</h2>'+c;
+  const html='<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Memória de cálculo — '+esc(sval('elemento'))+'</title>'+
+  '<style>body{font-family:"Segoe UI",system-ui,sans-serif;color:#16232e;max-width:900px;margin:0 auto;padding:26px;font-size:12.5px;line-height:1.5}'+
+  'h1{font-size:19px;border-bottom:2px solid #0d2a44;padding-bottom:6px;margin-bottom:4px}'+
+  'h2{font-size:14px;margin:20px 0 6px;color:#0d2a44;border-bottom:1px solid #c9d3dc;padding-bottom:3px}'+
+  'table{width:100%;border-collapse:collapse;font-size:11.5px;margin:6px 0}'+
+  'th,td{border:1px solid #d7dfe6;padding:4px 6px;text-align:right}th:first-child,td:first-child{text-align:left}'+
+  'thead th{background:#eef3f7}pre{background:#f7fafc;border-left:3px solid #164b77;padding:8px 10px;font-size:11px;white-space:pre-wrap;font-family:ui-monospace,monospace}'+
+  'svg{width:100%;height:auto;max-height:230px;page-break-inside:avoid}.cab{display:flex;justify-content:space-between;align-items:flex-end}'+
+  '.rod{margin-top:26px;border-top:1px solid #c9d3dc;padding-top:8px;font-size:11px;color:#5a6b78;text-align:center}'+
+  '.av{border-left:3px solid #b26a00;background:#fdf8ef;padding:8px 10px;font-size:11px;margin:8px 0}'+
+  '@media print{h2{page-break-after:avoid}}</style></head><body>'+
+  '<div class="cab"><div><h1>APAVAN ENGENHARIA E CONSULTORIA</h1><b>MEMÓRIA DE CÁLCULO — VIGA PROTENDIDA</b></div>'+
+  '<div style="text-align:right;font-size:11px">'+esc(sval('data'))+'<br>ABNT NBR 6118:2023</div></div>'+
+  sec(1,'Identificação','<table><tr><td>Obra</td><td>'+esc(sval('obra'))+'</td></tr><tr><td>Elemento</td><td>'+esc(sval('elemento'))+
+    '</td></tr><tr><td>Local</td><td>'+esc(sval('local'))+'</td></tr><tr><td>Responsável técnico</td><td>'+esc(sval('resp'))+' — '+esc(sval('crea'))+'</td></tr></table>')+
+  sec(2,'Geometria',tabDe('tabSec')+svgDe('desSecao')+memDe('memSec'))+
+  sec(3,'Materiais',tabDe('tabConc')+tabDe('tabAcoP')+memDe('memConc'))+
+  sec(4,'Sistema de protensão',tabDe('tabLimProt')+memDe('memLimProt'))+
+  sec(5,'Perfil do cabo',svgDe('grafCabo'))+
+  sec(6,'Carregamentos','<table><tr><td>Peso próprio</td><td>'+fmt(R.gpp)+' kN/m</td></tr><tr><td>Permanente adicional</td><td>'+
+    fmt(val('g2'))+' kN/m</td></tr><tr><td>Variável</td><td>'+fmt(val('q1'))+' kN/m</td></tr></table>')+
+  sec(7,'Combinações',tabDe('tabComb')+memDe('memComb'))+
+  sec(8,'Análise estrutural',tabDe('tabEsf')+svgDe('gMom')+svgDe('gCort')+memDe('memEsf'))+
+  sec(9,'Perdas de protensão',tabDe('tabPerdas')+svgDe('gPerdas')+svgDe('gPx')+memDe('memPerdas'))+
+  sec(10,'Verificação das tensões',tabDe('tabFases')+svgDe('gSinf')+memDe('memTens'))+
+  sec(11,'ELU — Flexão',tabDe('tabFlex')+svgDe('gMrd')+memDe('memFlex'))+
+  sec(12,'ELU — Cisalhamento',tabDe('tabCis')+svgDe('gVrd')+memDe('memCis'))+
+  sec(13,'ELS',tabDe('tabELS')+memDe('memELS'))+
+  sec(14,'Flechas',tabDe('tabFlecha')+svgDe('gFlecha')+memDe('memFlecha'))+
+  sec(15,'Armaduras',tabDe('tabAtiva')+tabDe('tabPassiva')+tabDe('tabEstribos')+memDe('memPassiva'))+
+  sec(16,'Detalhamento',svgDe('desDet'))+
+  sec(17,'Gráficos complementares',svgDe('gMp')+svgDe('gContra'))+
+  sec(18,'Conclusão e diagnóstico','<div>'+$('#diagnostico').innerHTML.replace(/class="sit ok"/g,'style="color:#137a4d;font-weight:600"')
+    .replace(/class="sit at"/g,'style="color:#b26a00;font-weight:600"').replace(/class="sit no"/g,'style="color:#b3261e;font-weight:600"')
+    .replace(/class="sit nd"/g,'style="color:#5a6b78;font-weight:600"')+'</div>'+
+    '<div class="av">Esta ferramenta é destinada ao apoio ao cálculo e à análise estrutural. Os resultados devem ser verificados por profissional legalmente habilitado e não substituem a análise, o julgamento de engenharia, o projeto executivo ou a responsabilidade técnica.</div>'+
+    $('#limitacoes').innerHTML.replace(/class="aviso-box"/g,'class="av"'))+
+  '<div class="rod"><b>APavan Engenharia e Consultoria</b><br>Engenharia Civil<br>Tubarão — SC</div></body></html>';
+  const w=window.open('','_blank');
+  if(!w){alert('Permita janelas pop-up para gerar o relatório.');return;}
+  w.document.write(html);w.document.close();setTimeout(()=>w.print(),600);};
+
+/* ============================================================
+   TESTES DO MOTOR
+   ============================================================ */
+function testes(){
+  const res=[];
+  const T=(nome,ok,det)=>res.push({nome:nome,ok:ok,det:det});
+  const L=10,q=20,n=501,xs=linspace(0,L,n);
+  const E=ENGINE.esforcos({dist:[{x1:0,x2:L,q1:q,q2:q}],pontos:[],momentos:[]},L,xs);
+  T('Equilíbrio das reações (carga uniforme)',Math.abs(E.Ra-q*L/2)<1e-6,'Ra = '+fmt(E.Ra,4)+' kN · teórico '+fmt(q*L/2,4));
+  T('Diagrama de momento — qL²/8',Math.abs(Math.max.apply(null,E.M)-q*L*L/8)<1e-3,
+    'M máx = '+fmt(Math.max.apply(null,E.M),4)+' · teórico '+fmt(q*L*L/8,4)+' kN·m');
+  T('Diagrama de cortante — qL/2',Math.abs(E.V[0]-q*L/2)<1e-6,'V(0) = '+fmt(E.V[0],4)+' kN');
+  const EP=ENGINE.esforcos({dist:[],pontos:[{x:L/2,P:100}],momentos:[]},L,xs);
+  T('Carga concentrada — PL/4',Math.abs(Math.max.apply(null,EP.M)-100*L/4)<0.5,
+    'M máx = '+fmt(Math.max.apply(null,EP.M),3)+' · teórico '+fmt(100*L/4,3)+' kN·m');
+  const EI=30e6*0.002;
+  const v=ENGINE.flecha(xs,E.M,EI), vt=5*q*Math.pow(L,4)/(384*EI);
+  T('Flecha — 5qL⁴/384EI',Math.abs(Math.max.apply(null,v)-vt)/vt<2e-3,
+    'δ = '+fmt(Math.max.apply(null,v)*1000,4)+' mm · teórico '+fmt(vt*1000,4)+' mm');
+  const s=ENGINE.propSecao({tipo:'ret',bw:0.3,h:0.8});
+  T('Propriedades da seção retangular',Math.abs(s.I-0.3*Math.pow(0.8,3)/12)<1e-12&&Math.abs(s.yt-0.4)<1e-12,
+    'I = '+fmt(s.I*1e8,0)+' cm⁴ · yt = '+fmt(s.yt*100,2)+' cm');
+  const cbR=ENGINE.cabo({perfil:'reto',eMeio:0.2},L,xs);
+  T('Cabo reto — excentricidade constante',Math.abs(cbR.e[0]-cbR.e[n-1])<1e-12,'e = '+fmt(cbR.e[0]*100,2)+' cm');
+  const cbP=ENGINE.cabo({perfil:'parab',eApoio:0.05,eMeio:0.30},L,xs);
+  T('Cabo parabólico — e no meio do vão',Math.abs(cbP.e[Math.round((n-1)/2)]-0.30)<1e-9,
+    'e(L/2) = '+fmt(cbP.e[Math.round((n-1)/2)]*100,3)+' cm');
+  const R=state.R;
+  if(R){
+    T('Protensão — P∞ < P imediata < P₀',R.Pinf0<=R.Pimd0&&R.Pimd0<=R.P0,
+      fmt(R.Pinf0)+' ≤ '+fmt(R.Pimd0)+' ≤ '+fmt(R.P0)+' kN');
+    T('Perdas — total entre 0% e 60%',(1-R.Pinf0/R.P0)>=0&&(1-R.Pinf0/R.P0)<0.6,
+      'perda total = '+fmt((1-R.Pinf0/R.P0)*100,2)+'%');
+    T('Equilíbrio global do modelo (ΣF = 0)',R.eq.erro<1e-3,'erro = '+fmt(R.eq.erro*100,6)+'%');
+    T('ELU — equilíbrio da seção (Rcc + Rs2 = Rp + Rs)',Math.abs(R.flex.res)/Math.max(R.flex.Rcc,1)<1e-3,
+      'resíduo = '+fmt(R.flex.res,5)+' kN');
+    T('ELU — momento resistente positivo e finito',isFinite(R.flex.MRd)&&R.flex.MRd>0,'MRd = '+fmt(R.flex.MRd)+' kN·m');
+    const semP=ENGINE.flexao(R.sec,R.mc,{Ap:0,dp:R.ds,As:0.002,ds:R.ds,As2:0,ds2:0.05,
+      fyd:R.fyd,Es:R.Es,ap:R.ap,epre:0});
+    T('Viga sem protensão — seção resolve equilíbrio',isFinite(semP.MRd)&&semP.MRd>0,'MRd (Ap = 0, As = 20 cm²) = '+fmt(semP.MRd)+' kN·m');
+    T('ELS — tensões finitas em todas as fases',R.fases.every(f=>f.sup.every(isFinite)&&f.inf.every(isFinite)),'7 fases verificadas');
+  }else T('Modelo carregado',false,'Execute o cálculo antes dos testes.');
+  $('#saidaTestes').innerHTML='<div style="margin-top:10px">'+res.map(r=>
+    '<div style="padding:6px 0;border-bottom:1px solid #eef2f5">'+sitHTML(r.ok?'ok':'no',r.ok?'✓':'✗')+
+    ' <b style="font-size:13px">'+r.nome+'</b><div class="nota">'+r.det+'</div></div>').join('')+
+    '<div class="nota" style="margin-top:8px"><b>'+res.filter(r=>r.ok).length+' de '+res.length+'</b> testes aprovados.</div></div>';
+}
+$('#btTestes').onclick=testes;
+
+/* ============================================================
+   PWA
+   ============================================================ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js').catch(()=>{}));}
+let promptInstalar=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptInstalar=e;$('#btInstalar').hidden=false;});
+$('#btInstalar').onclick=async()=>{if(promptInstalar){promptInstalar.prompt();promptInstalar=null;$('#btInstalar').hidden=true;}};
+
+/* ============================================================
+   INICIALIZAÇÃO
+   ============================================================ */
+(function init(){
+  $('#data').value=new Date().toISOString().slice(0,10);
+  $$('.aba')[0].setAttribute('aria-selected','true');
+  desenhaApoios();
+  renderTabelas();
+  visibilidade();
+  calcular();
+  listarProjetos();
+})();
+</script>
+</body>
+</html>
